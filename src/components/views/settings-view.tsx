@@ -72,7 +72,7 @@ export function SettingsView() {
   const [nameDraft, setNameDraft] = useState(settings.userName);
   const [nameSaved, setNameSaved] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
-  const [resetMode, setResetMode] = useState<"demo" | "empty">("demo");
+  const [resetMode, setResetMode] = useState<"empty">("empty");
   const [importError, setImportError] = useState<string | null>(null);
   const [permission, setPermission] = useState(getNotificationPermission());
   const fileRef = useRef<HTMLInputElement>(null);
@@ -589,7 +589,7 @@ export function SettingsView() {
             </Button>
             <Button variant="destructive" onClick={confirmReset}>
               <Trash2 className="h-4 w-4" aria-hidden="true" />
-              {resetMode === "demo" ? "Demo veriye dön" : "Tüm verileri sil"}
+              Tüm verileri sil
             </Button>
           </div>
         }
@@ -598,57 +598,20 @@ export function SettingsView() {
           <div className="flex items-start gap-2 rounded-xl bg-destructive/10 p-3 text-xs text-danger">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <p>
-              {resetMode === "demo"
-                ? "Mevcut veriler silinip örnek kedi ve hatırlatıcılar yeniden yüklenecek."
-                : "Tüm kedi profilleri, hatırlatıcılar ve bakım kayıtları kalıcı olarak silinecek."}
+              Tüm kedi profilleri, hatırlatıcılar ve bakım kayıtları kalıcı olarak silinecek.
             </p>
           </div>
 
           <div className="space-y-2">
-            <label
-              className={`flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition ${
-                resetMode === "demo"
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/40"
-              }`}
-            >
-              <input
-                type="radio"
-                name="reset-mode"
-                value="demo"
-                checked={resetMode === "demo"}
-                onChange={() => setResetMode("demo")}
-                className="mt-0.5 accent-[hsl(var(--primary))]"
-              />
+            <div className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/5 p-3">
               <span className="text-xs">
-                <span className="block font-bold">Demo veriyle başla</span>
+                <span className="block font-bold">Tüm veriler silinecek</span>
                 <span className="text-muted-foreground">
-                  Örnek kedi Mırmır, hatırlatıcılar ve 14 günlük kayıt yüklenir.
+                  Tüm kedi profilleri, hatırlatıcılar ve bakım kayıtları kalıcı olarak
+                  silinecek. Sahte/örnek veri kullanılmaz.
                 </span>
               </span>
-            </label>
-            <label
-              className={`flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition ${
-                resetMode === "empty"
-                  ? "border-destructive bg-destructive/5"
-                  : "border-border hover:border-destructive/40"
-              }`}
-            >
-              <input
-                type="radio"
-                name="reset-mode"
-                value="empty"
-                checked={resetMode === "empty"}
-                onChange={() => setResetMode("empty")}
-                className="mt-0.5 accent-[hsl(var(--destructive))]"
-              />
-              <span className="text-xs">
-                <span className="block font-bold">Boş başla</span>
-                <span className="text-muted-foreground">
-                  Tüm kayıtlar silinir; ilk kedini kendin eklersin.
-                </span>
-              </span>
-            </label>
+            </div>
           </div>
         </div>
       </Dialog>

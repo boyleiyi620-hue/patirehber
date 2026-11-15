@@ -23,7 +23,7 @@ import type {
   Vaccination,
   WeightEntry,
 } from "@/lib/types";
-import { createInitialData, defaultSettings } from "@/lib/demo-data";
+import { defaultSettings } from "@/lib/demo-data";
 import { defaultRemindersForCat } from "@/lib/reminders";
 import { clearStoredData, loadData, saveData } from "@/lib/storage";
 import { createClient } from "@/lib/supabase/client";
@@ -899,30 +899,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   const resetData = useCallback(
-    (mode: "demo" | "empty") => {
-      if (mode === "demo") {
-        const seeded = createInitialData();
-        setData(seeded);
-      } else {
-        const empty: AppData = {
-          version: 1,
-          settings: defaultSettings(),
-          cats: [],
-          reminders: [],
-          logs: [],
-          tasks: [],
-          healthEntries: [],
-          meta: {
-            createdAt: new Date().toISOString(),
-            lastOpenedAt: new Date().toISOString(),
-          },
-        };
-        setData(empty);
-        clearStoredData();
-      }
+    (_mode: "demo" | "empty") => {
+      const empty: AppData = {
+        version: 2,
+        settings: defaultSettings(),
+        cats: [],
+        reminders: [],
+        logs: [],
+        tasks: [],
+        healthEntries: [],
+        meta: {
+          createdAt: new Date().toISOString(),
+          lastOpenedAt: new Date().toISOString(),
+        },
+      };
+      setData(empty);
+      clearStoredData();
       setStatus("ready");
       setError(null);
-      notify(mode === "demo" ? "Demo veriler geri yüklendi." : "Tüm veriler silindi.");
+      notify("Tüm veriler silindi.");
     },
     [notify],
   );
