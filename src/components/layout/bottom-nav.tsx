@@ -9,6 +9,7 @@ import {
   Home,
   ListChecks,
   Settings,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ const items: Array<{
   { href: "/tasks", labelKey: "nav.tasks", icon: ListChecks },
   { href: "/reminders", labelKey: "nav.reminders", icon: Bell },
   { href: "/settings", labelKey: "nav.settings", icon: Settings },
+  { href: "/friends", labelKey: "nav.friends", icon: Users },
 ];
 
 /**
