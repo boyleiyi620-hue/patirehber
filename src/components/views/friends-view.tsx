@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Users, UserPlus, Copy, ArrowLeft, Cat as CatIcon } from "lucide-react";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -173,9 +174,10 @@ export function FriendsView() {
                     {friendCats.map((cat) => {
                       const age = getCatAge(cat.birthDate);
                       return (
-                        <Card key={cat.id} className="overflow-hidden">
-                          <CardContent className="p-4">
-                            <div className="flex items-start gap-3">
+                        <Link key={cat.id} href={`/friends/${selectedId}/cats/${cat.id}`} className="block">
+                          <Card className="overflow-hidden card-hover">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-3">
                               {cat.photo ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img src={cat.photo} alt={cat.name} className="h-12 w-12 rounded-xl object-cover" />
@@ -194,6 +196,7 @@ export function FriendsView() {
                             </div>
                           </CardContent>
                         </Card>
+                        </Link>
                       );
                     })}
                   </div>
