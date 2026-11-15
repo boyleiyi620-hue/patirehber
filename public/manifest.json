@@ -1,0 +1,108 @@
+{
+  "name": "PatiRehber — Kedi Bakım Rehberi",
+  "short_name": "PatiRehber",
+  "description": "Kedinizin mama, su, kum, aşı ve kilo takibini tek yerden yönetin. 51 ırk rehberi, hesaplayıcılar ve hatırlatıcılar. Çevrimdışı çalışır.",
+  "lang": "tr",
+  "dir": "ltr",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait-primary",
+  "background_color": "#FAF6F1",
+  "theme_color": "#FF8C42",
+  "categories": [
+    "lifestyle",
+    "health",
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Hatırlatıcılar",
+      "short_name": "Hatırlatıcılar",
+      "description": "Bugünkü bakım görevlerini gör",
+      "url": "/reminders",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Kedilerim",
+      "short_name": "Kedilerim",
+      "description": "Kedi profillerine git",
+      "url": "/cats",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Rehber",
+      "short_name": "Rehber",
+      "description": "Kedi bakım bilgi bankası",
+      "url": "/guide",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Görevler",
+      "short_name": "Görevler",
+      "description": "Bakım görevlerini yönet",
+      "url": "/tasks",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Ara",
+      "short_name": "Ara",
+      "description": "Kediler, görevler ve rehberde ara",
+      "url": "/search",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+}
