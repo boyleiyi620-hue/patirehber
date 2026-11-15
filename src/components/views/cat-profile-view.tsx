@@ -607,6 +607,11 @@ function CatProfileInner({ cat }: { cat: Cat }) {
               </div>
               <Badge variant="outline">{breed.activity} aktivite</Badge>
             </CardHeader>
+            <div className="px-6 pb-3 -mt-1">
+              <ButtonLink href={`/guide?cat=${cat.id}`} variant="soft" size="sm" className="w-full sm:w-auto">
+                🐾 {cat.name} için özel rehber
+              </ButtonLink>
+            </div>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">

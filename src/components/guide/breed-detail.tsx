@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
+import { useState } from "react";
 import type { Breed } from "@/lib/types";
 
 export function BreedDetailDialog({
@@ -196,42 +197,7 @@ export function BreedDetailDialog({
             <Heart className="h-3.5 w-3.5 text-primary-strong" aria-hidden="true" />
             Sevdikleri / Sevmedikleri
           </p>
-          <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
-            <div className="rounded-xl bg-accent/10 p-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-                Sever
-              </p>
-              <ul className="mt-1 space-y-1 text-xs leading-relaxed">
-                {(breed.activity === "Yüksek" || breed.activity === "Çok yüksek"
-                  ? ["İnteraktif oyun", "Tırmanma ve zıplama", "Pencere izleme", "Bulmaca mama kapları"]
-                  : breed.activity === "Düşük" || breed.activity === "Düşük-Orta"
-                    ? ["Sakin ortam", "Yumuşak yatak", "Kucağa oturma", "Nazik tımar"]
-                    : ["Düzenli oyun", "Tırmalama direği", "Kucak ve sevme", "Güneşli pencere"]
-                ).map((item) => (
-                  <li key={item} className="flex gap-1.5">
-                    <span aria-hidden="true">✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-xl bg-destructive/10 p-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-danger">
-                Sevmez
-              </p>
-              <ul className="mt-1 space-y-1 text-xs leading-relaxed">
-                {(breed.coat.toLowerCase().includes("uzun")
-                  ? ["Sık tarama (başlangıçta)", "Gürültülü ortam", "Ani değişimler", "Yalnızlık"]
-                  : ["Banyo", "Kucağa zorlama", "Gürültü", "Yabancılar (ilk temasta)"]
-                ).map((item) => (
-                  <li key={item} className="flex gap-1.5">
-                    <span aria-hidden="true">✗</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+          <TabButtons breed={breed} />
         </div>
 
         <div className="flex flex-wrap gap-1.5">
@@ -282,6 +248,56 @@ function DetailBlock({
         {title}
       </p>
       <div className="mt-1.5">{children}</div>
+    </div>
+  );
+}
+
+
+function TabButtons({ breed }: { breed: Breed }) {
+  const [tab, setTab] = useState<"likes" | "dislikes">("likes");
+  const likes =
+    breed.activity === "Yüksek" || breed.activity === "Çok yüksek"
+      ? ["İnteraktif oyun", "Tırmanma ve zıplama", "Pencere izleme", "Bulmaca mama kapları"]
+      : breed.activity === "Düşük" || breed.activity === "Düşük-Orta"
+        ? ["Sakin ortam", "Yumuşak yatak", "Kucağa oturma", "Nazik tımar"]
+        : ["Düzenli oyun", "Tırmalama direği", "Kucak ve sevme", "Güneşli pencere"];
+  const dislikes = breed.coat.toLowerCase().includes("uzun")
+    ? ["Sık tarama (başlangıçta)", "Gürültülü ortam", "Ani değişimler", "Yalnızlık"]
+    : ["Banyo", "Kucağa zorlama", "Gürültü", "Yabancılar (ilk temasta)"];
+  return (
+    <div className="mt-1.5">
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setTab("likes")}
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+            tab === "likes"
+              ? "border-accent bg-accent/15 text-emerald-700 dark:text-emerald-300"
+              : "border-border bg-card text-muted-foreground"
+          }`}
+        >
+          Sever
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("dislikes")}
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+            tab === "dislikes"
+              ? "border-destructive bg-destructive/10 text-danger"
+              : "border-border bg-card text-muted-foreground"
+          }`}
+        >
+          Sevmez
+        </button>
+      </div>
+      <ul className="mt-2 space-y-1 text-xs leading-relaxed">
+        {(tab === "likes" ? likes : dislikes).map((item) => (
+          <li key={item} className="flex gap-1.5">
+            <span aria-hidden="true">{tab === "likes" ? "✓" : "✗"}</span>
+            {item}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

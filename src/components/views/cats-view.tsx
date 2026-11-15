@@ -136,6 +136,14 @@ export function CatsView() {
                       Profili gör
                       <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                     </ButtonLink>
+                    <ButtonLink
+                      href={`/guide?cat=${cat.id}`}
+                      variant="soft"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      🐾 Özel rehber
+                    </ButtonLink>
                     {!isActive ? (
                       <Button
                         variant="soft"

@@ -13,15 +13,36 @@ type GameTab = "memory" | "quiz";
 const MEMORY_EMOJIS = ["🐱", "🐾", "🧶", "🐟", "🥛", " mouse".trim(), "🐱", "🐾", "🧶", "🐟", "🥛", "🐭"];
 
 const QUIZ_QUESTIONS = [
-  { q: "Kediler günde ortalama kaç saat uyur?", a: ["8-10", "12-16", "20-22"], correct: 1 },
-  { q: "Kediler için en toksik bitkilerden biri?", a: ["Nane", "Zambak (Lily)", "Catnip"], correct: 1 },
-  { q: "Yetişkin kedi günde kaç öğün mama yemeli?", a: ["1", "2-3", "6"], correct: 1 },
-  { q: "Kediler suyu nasıl tercih eder?", a: ["Durgun", "Akarsu", "Buzlu"], correct: 1 },
-  { q: "Normal kedi vücut ısısı (°C)?", a: ["36-37", "38-39", "40-41"], correct: 1 },
-  { q: "Kedilerde ideal BCS (vücut kondisyon skoru)?", a: ["3", "5", "9"], correct: 1 },
-  { q: "Kedi tırnakları ne sıklıkla kesilmeli?", a: ["Her gün", "2-4 haftada bir", "Yılda bir"], correct: 1 },
-  { q: "Hangi mama geçişi daha güvenli?", a: ["Aniden", "7-10 günde kademeli", "Hiç değiştirmeme"], correct: 1 },
+  { q: "Kediler günde ortalama kaç saat uyur?", options: ["8-10", "12-16", "20-22"], correct: 1, explain: "Kediler günde 12-16 saat uyur; yavrular ve yaşlılar daha fazla uyuyabilir." },
+  { q: "Kediler için en toksik bitkilerden biri?", options: ["Nane", "Zambak (Lily)", "Catnip"], correct: 1, explain: "Zambak (Lily) kediler için son derece toksiktir; böbrek yetmezliğine yol açabilir." },
+  { q: "Yetişkin kedi günde kaç öğün mama yemeli?", options: ["1", "2-3", "6"], correct: 1, explain: "Yetişkin kediler için günde 2-3 öğün idealdir; serbest besleme obezite riskini artırır." },
+  { q: "Kediler suyu nasıl tercih eder?", options: ["Durgun", "Akarsu", "Buzlu"], correct: 1, explain: "Kediler akan suyu tercih eder; kedi çeşmesi su alımını artırır." },
+  { q: "Normal kedi vücut ısısı (°C)?", options: ["36-37", "38-39", "40-41"], correct: 1, explain: "Normal kedi vücut ısısı 38-39 °C arasındadır." },
+  { q: "Kedilerde ideal BCS (vücut kondisyon skoru)?", options: ["3", "5", "9"], correct: 1, explain: "BCS 5 idealdir; kaburgalar hafif bastırarak hissedilir." },
+  { q: "Kedi tırnakları ne sıklıkla kesilmeli?", options: ["Her gün", "2-4 haftada bir", "Yılda bir"], correct: 1, explain: "Tırnaklar 2-4 haftada bir kontrol edilip kesilmelidir." },
+  { q: "Hangi mama geçişi daha güvenli?", options: ["Aniden", "7-10 günde kademeli", "Hiç değiştirmeme"], correct: 1, explain: "Mama geçişi 7-10 günde kademeli yapılmalıdır." },
+  { q: "Kedilerde günlük su ihtiyacı (ml/kg)?", options: ["10-20", "40-60", "100-120"], correct: 1, explain: "Sağlıklı kedi günde yaklaşık 40-60 ml/kg su almalıdır." },
+  { q: "Hangi besin kediler için zehirlidir?", options: ["Tavuk", "Soğan/Sarımsak", "Pirinç"], correct: 1, explain: "Soğan ve sarımsak kedilerde anemiye yol açabilir." },
+  { q: "Kedi kumu kaç cm derinlikte olmalı?", options: ["1-2 cm", "5-7 cm", "15 cm"], correct: 1, explain: "Kum derinliği 5-7 cm idealdir; kazma davranışını destekler." },
+  { q: "İlk aşı (karma) ne zaman yapılmalı?", options: ["Doğumda", "6-8 haftalık", "1 yaşında"], correct: 1, explain: "İlk karma aşı 6-8 haftalıkken başlar." },
+  { q: "Kısırlaştırma sonrası mama nasıl ayarlanmalı?", options: ["Aynı", "Kalori azaltılmalı", "İki katına çıkarılmalı"], correct: 1, explain: "Kısırlaştırma metabolizmayı yavaşlatır; kalori azaltılmalı ve kilo takibi yapılmalıdır." },
+  { q: "Kedilerde obezite sınırı (BCS)?", options: ["5", "7", "9"], correct: 2, explain: "BCS 9 morbid obezitedir; 7+ kilo kontrolü gerektirir." },
+  { q: "Hangi oyun kedi için en uygun zenginleştirmedir?", options: ["Sürekli lazer", "Tüy çubuğu + tırmanma", "Gürültülü oyuncak"], correct: 1, explain: "Tüy çubuğu avlanma içgüdüsünü tatmin eder; tırmanma alanı enerji atımı sağlar." },
+  { q: "Kedi stresinin en sık belirtisi?", options: ["Uyuma", "Tuvalet dışı yapma", "Miyavlama"], correct: 1, explain: "Tuvalet alışkanlığında değişim stres veya sağlık sorunu işaretidir." },
+  { q: "Yaşlı kedi (kaç yaş üstü) daha sık veteriner kontrolü ister?", options: ["3+", "7+", "12+"], correct: 1, explain: "7 yaş üstü kedilerde yıllık/biannual kontrol önerilir." },
+  { q: "Kedi mamasındaki temel protein kaynağı ne olmalı?", options: ["Tahıl", "Et/balık", "Sebze"], correct: 1, explain: "Kediler obligat karnivordur; hayvansal protein temeldir." },
+  { q: "Kedi taşıma kabı nasıl olmalı?", options: ["Açık üst", "Sağlam, havalandırmalı", "Çok büyük"], correct: 1, explain: "Sağlam ve havalandırmalı taşıma kabı güvenli seyahat sağlar." },
+  { q: "Kedilerde parazit içten (barsak) taraması ne sıklıkla?", options: ["Yılda bir", "Her ay", "Hiç"], correct: 0, explain: "Dışkı tahlili yılda en az bir kez önerilir; veteriner planına göre." },
 ];
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 export function GamesView() {
   const [tab, setTab] = useState<GameTab>("memory");
@@ -161,23 +182,49 @@ function MemoryGame() {
 }
 
 /* --------------------------- Quiz Game --------------------------- */
+type QuizQuestion = (typeof QUIZ_QUESTIONS)[number];
+
+function prepareQuestions() {
+  return shuffle(QUIZ_QUESTIONS).map((q) => {
+    const options = shuffle(q.options.map((text, i) => ({ text, correct: i === q.correct })));
+    return { ...q, options };
+  });
+}
+
 function QuizGame() {
+  const [questions, setQuestions] = useState<ReturnType<typeof prepareQuestions>>(() => prepareQuestions());
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
+  const [best, setBest] = useState<number | null>(null);
 
-  const q = QUIZ_QUESTIONS[index];
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("patirehber:quiz-best");
+      if (raw) setBest(Number(raw));
+    } catch {}
+  }, []);
+
+  const q = questions[index];
 
   const handleAnswer = (i: number) => {
     if (selected !== null) return;
     setSelected(i);
-    if (i === q.correct) setScore((s) => s + 1);
+    if (q.options[i].correct) setScore((s) => s + 1);
   };
 
   const next = () => {
-    if (index + 1 >= QUIZ_QUESTIONS.length) {
+    if (index + 1 >= questions.length) {
       setDone(true);
+      const finalScore = score + (selected !== null && q.options[selected]?.correct ? 0 : 0);
+      // score already updated
+      if (best === null || score > best) {
+        setBest(score);
+        try {
+          localStorage.setItem("patirehber:quiz-best", String(score));
+        } catch {}
+      }
     } else {
       setIndex((i) => i + 1);
       setSelected(null);
@@ -185,6 +232,7 @@ function QuizGame() {
   };
 
   const reset = () => {
+    setQuestions(prepareQuestions());
     setIndex(0);
     setSelected(null);
     setScore(0);
@@ -192,21 +240,23 @@ function QuizGame() {
   };
 
   if (done) {
+    const percent = Math.round((score / questions.length) * 100);
     return (
       <Card>
         <CardContent className="flex flex-col items-center gap-3 p-6 text-center">
           <Trophy className="h-10 w-10 text-amber-500 bounce-in" aria-hidden="true" />
           <p className="font-display text-xl font-extrabold">Yarışma bitti!</p>
           <p className="text-sm text-muted-foreground">
-            {score}/{QUIZ_QUESTIONS.length} doğru
+            {score}/{questions.length} doğru · %{percent}
           </p>
           <div className="text-3xl">
-            {score >= QUIZ_QUESTIONS.length * 0.8
-              ? "🏆"
-              : score >= QUIZ_QUESTIONS.length * 0.5
-                ? "🎉"
-                : "🐾"}
+            {percent >= 80 ? "🏆" : percent >= 50 ? "🎉" : "🐾"}
           </div>
+          {best !== null ? (
+            <p className="text-xs font-semibold text-muted-foreground">
+              En iyi skor: {best}/{questions.length}
+            </p>
+          ) : null}
           <Button onClick={reset}>Tekrar oyna</Button>
         </CardContent>
       </Card>
@@ -218,25 +268,25 @@ function QuizGame() {
       <CardContent className="space-y-4 p-4">
         <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
           <span>
-            Soru {index + 1}/{QUIZ_QUESTIONS.length}
+            Soru {index + 1}/{questions.length}
           </span>
           <span>Skor: {score}</span>
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-muted">
           <div
             className="h-full rounded-full bg-primary transition-all duration-500"
-            style={{ width: `${((index + 1) / QUIZ_QUESTIONS.length) * 100}%` }}
+            style={{ width: `${((index + 1) / questions.length) * 100}%` }}
           />
         </div>
         <p className="font-display text-base font-bold leading-snug">{q.q}</p>
         <div className="space-y-2">
-          {q.a.map((opt, i) => {
-            const isCorrect = i === q.correct;
+          {q.options.map((opt, i) => {
+            const isCorrect = opt.correct;
             const isSelected = selected === i;
             const showResult = selected !== null;
             return (
               <button
-                key={opt}
+                key={`${q.q}-${opt.text}-${i}`}
                 type="button"
                 onClick={() => handleAnswer(i)}
                 disabled={selected !== null}
@@ -263,7 +313,7 @@ function QuizGame() {
                 >
                   {String.fromCharCode(65 + i)}
                 </span>
-                <span className="flex-1">{opt}</span>
+                <span className="flex-1">{opt.text}</span>
                 {showResult && isCorrect ? (
                   <CheckCircle2 className="h-4 w-4 text-accent" aria-hidden="true" />
                 ) : null}
@@ -275,20 +325,17 @@ function QuizGame() {
           })}
         </div>
         {selected !== null ? (
-          <Button onClick={next} className="w-full">
-            {index + 1 >= QUIZ_QUESTIONS.length ? "Sonuçları gör" : "Sonraki soru"}
-          </Button>
+          <>
+            <div className="rounded-xl bg-muted/60 p-3 text-xs leading-relaxed text-muted-foreground">
+              <span className="font-bold text-foreground">Açıklama: </span>
+              {q.explain}
+            </div>
+            <Button onClick={next} className="w-full">
+              {index + 1 >= questions.length ? "Sonuçları gör" : "Sonraki soru"}
+            </Button>
+          </>
         ) : null}
       </CardContent>
     </Card>
   );
-}
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
 }
