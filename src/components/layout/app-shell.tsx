@@ -56,11 +56,11 @@ function ErrorScreen({
         </Button>
         <Button variant="outline" onClick={onRecover}>
           <Sparkles className="h-4 w-4" aria-hidden="true" />
-          Demo veriyle başla
+          Yeniden dene
         </Button>
       </div>
       <p className="mt-4 text-xs text-muted-foreground">
-        Demo veriyle başlamak, okunamayan kayıtları temizler.
+        Yeniden denemek, okunamayan kayıtları temizler.
       </p>
     </div>
   );
