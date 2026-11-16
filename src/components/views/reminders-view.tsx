@@ -240,7 +240,7 @@ export function RemindersView() {
               <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
                 {permission === "denied"
                   ? "İzin reddedilmiş. Tarayıcı ayarlarından PatiRehber için bildirim iznini açabilirsin."
-                  : "Saatinde hatırlatma almak için bildirim izni ver. Uygulama açıkken yerel bildirimler gönderilir."}
+                  : "Saatinde hatırlatma almak için bildirim izni ver. Tarayıcı kısıtları nedeniyle uygulama tamamen kapalıyken alarm çalması garanti değildir; PWA olarak kurmak ve izin vermek en iyi sonucu verir."}
               </p>
             </div>
             {permission === "granted" ? (
