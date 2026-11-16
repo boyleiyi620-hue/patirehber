@@ -5,6 +5,7 @@ import { AlertTriangle, ArrowRight, RefreshCw, Sparkles } from "lucide-react";
 import { useApp } from "@/components/providers/app-provider";
 import { usePathname } from "next/navigation";
 import { BottomNav } from "./bottom-nav";
+import { AlarmOverlay } from "@/components/alarm-overlay";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/empty-state";
 
@@ -141,6 +142,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       ) : null}
 
+      <AlarmOverlay />
       {pathname !== "/onboarding" && pathname !== "/auth" ? <BottomNav /> : null}
     </div>
   );

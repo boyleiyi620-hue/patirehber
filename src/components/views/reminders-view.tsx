@@ -69,6 +69,7 @@ export function RemindersView() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Reminder | null>(null);
   const [permissionBusy, setPermissionBusy] = useState(false);
+  const [listOpen, setListOpen] = useState(false);
 
   const now = useMemo(() => new Date(), []);
   const today = todayKey();
@@ -386,7 +387,18 @@ export function RemindersView() {
         </details>
       </div>
 
-      {/* Liste */}
+      {/* Hatırlatıcı listesi (butonla açılır) */}
+      <div className="mt-3">
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full"
+          onClick={() => setListOpen((v) => !v)}
+        >
+          {listOpen ? "Hatırlatıcıları gizle" : "Hatırlatıcıları göster ve düzenle"}
+        </Button>
+      </div>
+      {listOpen ? (
       <div className="mt-3 space-y-2.5">
         {filtered.length === 0 ? (
           <EmptyState
@@ -516,6 +528,7 @@ export function RemindersView() {
         )}
       </div>
 
+      ) : null}
       <details className="mt-4 rounded-2xl border border-border/70 bg-card p-3">
         <summary className="cursor-pointer text-xs font-bold text-foreground">
           Gecmis, tur rehberi ve hesaplayici
