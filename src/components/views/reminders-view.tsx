@@ -312,7 +312,7 @@ export function RemindersView() {
         ))}
       </div>
 
-      {/* Arama ve filtreler */}
+      {/* Arama */}
       <div className="mt-3 space-y-2.5">
         <div className="relative">
           <Search
@@ -327,54 +327,63 @@ export function RemindersView() {
             className="ps-10"
           />
         </div>
-        <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-1">
-          {TYPE_FILTERS.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              onClick={() => setTypeFilter(filter.value)}
-              aria-pressed={typeFilter === filter.value}
-              className={`shrink-0 rounded-full border px-2.5 py-1.5 text-[11px] font-semibold transition ${
-                typeFilter === filter.value
-                  ? "border-primary bg-primary/10 text-primary-strong"
-                  : "border-border bg-card text-muted-foreground hover:border-primary/40"
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
-        {cats.length > 1 ? (
-          <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-1">
-            <button
-              type="button"
-              onClick={() => setCatFilter("all")}
-              aria-pressed={catFilter === "all"}
-              className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
-                catFilter === "all"
-                  ? "border-primary bg-primary/10 text-primary-strong"
-                  : "border-border bg-card text-muted-foreground hover:border-primary/40"
-              }`}
-            >
-              Tüm kediler
-            </button>
-            {cats.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setCatFilter(cat.id)}
-                aria-pressed={catFilter === cat.id}
-                className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
-                  catFilter === cat.id
-                    ? "border-primary bg-primary/10 text-primary-strong"
-                    : "border-border bg-card text-muted-foreground hover:border-primary/40"
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
+
+        {/* Filtreler (katlanabilir) */}
+        <details className="rounded-2xl border border-border/70 bg-card p-3">
+          <summary className="cursor-pointer text-xs font-bold text-foreground">
+            Filtreler
+          </summary>
+          <div className="mt-2.5 space-y-2.5">
+            <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-1">
+              {TYPE_FILTERS.map((filter) => (
+                <button
+                  key={filter.value}
+                  type="button"
+                  onClick={() => setTypeFilter(filter.value)}
+                  aria-pressed={typeFilter === filter.value}
+                  className={`shrink-0 rounded-full border px-2.5 py-1.5 text-[11px] font-semibold transition ${
+                    typeFilter === filter.value
+                      ? "border-primary bg-primary/10 text-primary-strong"
+                      : "border-border bg-card text-muted-foreground hover:border-primary/40"
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+            {cats.length > 1 ? (
+              <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-1">
+                <button
+                  type="button"
+                  onClick={() => setCatFilter("all")}
+                  aria-pressed={catFilter === "all"}
+                  className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                    catFilter === "all"
+                      ? "border-primary bg-primary/10 text-primary-strong"
+                      : "border-border bg-card text-muted-foreground hover:border-primary/40"
+                  }`}
+                >
+                  Tüm kediler
+                </button>
+                {cats.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setCatFilter(cat.id)}
+                    aria-pressed={catFilter === cat.id}
+                    className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                      catFilter === cat.id
+                        ? "border-primary bg-primary/10 text-primary-strong"
+                        : "border-border bg-card text-muted-foreground hover:border-primary/40"
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        </details>
       </div>
 
       {/* Liste */}
@@ -507,8 +516,12 @@ export function RemindersView() {
         )}
       </div>
 
-      {/* Geçmiş */}
-      <Card className="mt-4">
+      <details className="mt-4 rounded-2xl border border-border/70 bg-card p-3">
+        <summary className="cursor-pointer text-xs font-bold text-foreground">
+          Gecmis, tur rehberi ve hesaplayici
+        </summary>
+        <div className="mt-3 space-y-4">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-1.5">
             <History className="h-4 w-4 text-primary-strong" aria-hidden="true" />
@@ -604,6 +617,9 @@ export function RemindersView() {
         </div>
         <PortionCalculator />
       </section>
+
+        </div>
+      </details>
 
       <ReminderDialog
         open={dialogOpen}
