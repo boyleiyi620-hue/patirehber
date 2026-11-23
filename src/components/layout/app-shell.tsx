@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, RefreshCw, Sparkles } from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useApp } from "@/components/providers/app-provider";
 import { usePathname } from "next/navigation";
 import { BottomNav } from "./bottom-nav";
@@ -35,11 +35,9 @@ function LoadingScreen() {
 function ErrorScreen({
   message,
   onRetry,
-  onRecover,
 }: {
   message: string;
   onRetry: () => void;
-  onRecover: () => void;
 }) {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col items-center justify-center px-4 py-10 text-center">
@@ -55,13 +53,9 @@ function ErrorScreen({
           <RefreshCw className="h-4 w-4" aria-hidden="true" />
           Tekrar dene
         </Button>
-        <Button variant="outline" onClick={onRecover}>
-          <Sparkles className="h-4 w-4" aria-hidden="true" />
-          Yeniden dene
-        </Button>
       </div>
       <p className="mt-4 text-xs text-muted-foreground">
-        Yeniden denemek, okunamayan kayıtları temizler.
+        Yeniden denemek verileri tekrar yükler; kayıtları silmez.
       </p>
     </div>
   );
@@ -74,20 +68,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     status,
     error,
     retry,
-    recoverWithDemo,
     storageError,
     dismissStorageError,
+    syncError,
+    retrySync,
     toast,
     dismissToast,
   } = useApp();
 
+  if (pathname.startsWith("/auth")) return <>{children}</>;
   if (status === "loading") return <LoadingScreen />;
   if (status === "error") {
     return (
       <ErrorScreen
         message={error ?? "Beklenmeyen bir hata oluştu."}
         onRetry={retry}
-        onRecover={recoverWithDemo}
       />
     );
   }
@@ -127,6 +122,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             Kapat
           </button>
+        </div>
+      ) : null}
+
+      {syncError ? (
+        <div
+          role="alert"
+          className="fixed inset-x-3 top-20 z-50 mx-auto flex max-w-xl items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-50 px-4 py-3 text-xs text-amber-900 shadow-soft dark:bg-amber-950/60 dark:text-amber-100"
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <p className="flex-1 leading-relaxed">
+            Bulut eşitlemesi tamamlanamadı. Bu cihazdaki veriler korunuyor; bağlantı düzelince tekrar eşitleyebilirsin. {syncError}
+          </p>
+          <Button size="sm" variant="outline" onClick={retrySync}>
+            <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+            Yeniden eşitle
+          </Button>
         </div>
       ) : null}
 

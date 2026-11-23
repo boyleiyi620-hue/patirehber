@@ -62,6 +62,25 @@ export function AuthView() {
     }
   };
 
+  const sendPasswordReset = async () => {
+    setError(null);
+    setMessage(null);
+    if (!email.trim()) {
+      setError("Önce e-posta adresini gir.");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/auth/callback?next=%2Fauth%2Freset`,
+    });
+    setLoading(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setMessage("E-posta adresin kayıtlıysa parola yenileme bağlantısı gönderildi.");
+  };
+
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-8">
       <div className="mb-6 text-center">
@@ -138,10 +157,10 @@ export function AuthView() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="En az 6 karakter"
+                  placeholder={mode === "register" ? "En az 10 karakter" : "Şifren"}
                   className="ps-10"
                   required
-                  minLength={6}
+                  minLength={mode === "register" ? 10 : undefined}
                 />
               </div>
             </div>
@@ -157,6 +176,17 @@ export function AuthView() {
               {loading ? "İşleniyor…" : mode === "login" ? "Giriş yap" : "Kayıt ol"}
             </Button>
           </form>
+
+          {mode === "login" ? (
+            <button
+              type="button"
+              onClick={() => void sendPasswordReset()}
+              disabled={loading}
+              className="w-full text-center text-xs font-semibold text-primary-strong underline-offset-2 hover:underline disabled:opacity-60"
+            >
+              Şifremi unuttum
+            </button>
+          ) : null}
 
           <div className="relative py-1">
             <div className="absolute inset-0 flex items-center">

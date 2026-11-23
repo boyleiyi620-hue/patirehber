@@ -82,6 +82,7 @@ interface AppContextValue {
   lang: Language;
   error: string | null;
   storageError: string | null;
+  syncError: string | null;
   toast: string | null;
   t: (key: string) => string;
 
@@ -90,7 +91,7 @@ interface AppContextValue {
   dismissToast: () => void;
   dismissStorageError: () => void;
   retry: () => void;
-  recoverWithDemo: () => void;
+  retrySync: () => void;
 
   // Ayarlar & kedi
   updateSettings: (patch: Partial<Settings>) => void;
@@ -165,8 +166,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<AppStatus>("loading");
   const [error, setError] = useState<string | null>(null);
   const [storageError, setStorageError] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncGeneration, setSyncGeneration] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const syncQueue = useRef<Promise<void>>(Promise.resolve());
 
   /* ------------------------------ İlk yükleme (Supabase) ------------------- */
   useEffect(() => {
@@ -203,7 +207,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setStatus("ready");
       } catch (e) {
         if (cancelled) return;
-        setError("Veriler yüklenemedi. İnternet bağlantınızı kontrol edin.");
+        setError(e instanceof Error
+          ? `Veriler yüklenemedi. İnternet bağlantınızı kontrol edin. (${e.message})`
+          : "Veriler yüklenemedi. İnternet bağlantınızı kontrol edin.");
         setStatus("error");
       }
     })();
@@ -217,6 +223,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       if (!session?.user) {
         setData(null);
+        setSyncError(null);
       }
     });
     return () => sub.subscription.unsubscribe();
@@ -227,11 +234,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (status !== "ready" || !data) return;
     const result = saveData(data);
     setStorageError(result.ok ? null : (result.error ?? "Veri kaydedilemedi."));
-    // Sync to Supabase (immediate for correctness)
-    if (user) {
-      saveUserData(user.id, data).catch((e) => console.error("sync error", e));
-    }
   }, [data, status, user]);
+
+  /* --------------------------- Güvenli bulut eşitleme ---------------------- */
+  useEffect(() => {
+    if (status !== "ready" || !data || !user) return;
+    const snapshot = data;
+    let active = true;
+    syncQueue.current = syncQueue.current
+      .catch(() => undefined)
+      .then(() => saveUserData(user.id, snapshot))
+      .then(() => {
+        if (active) setSyncError(null);
+      })
+      .catch((e) => {
+        if (active) {
+          setSyncError(e instanceof Error ? e.message : "Bilinmeyen eşitleme hatası.");
+        }
+      });
+    return () => { active = false; };
+  }, [data, status, user, syncGeneration]);
 
   /* --------------------------------- Tema --------------------------------- */
   const themeMode = data?.settings.theme;
@@ -276,22 +298,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined") window.location.reload();
   }, []);
 
-  const recoverWithDemo = useCallback(() => {
-    const empty: AppData = {
-      version: 2,
-      settings: defaultSettings(),
-      cats: [],
-      reminders: [],
-      logs: [],
-      tasks: [],
-      healthEntries: [],
-      meta: { createdAt: new Date().toISOString(), lastOpenedAt: new Date().toISOString() },
-    };
-    setData(empty);
-    setError(null);
-    setStatus("ready");
-    notify("Veriler sıfırlandı.");
-  }, [notify]);
+  const retrySync = useCallback(() => setSyncGeneration((generation) => generation + 1), []);
 
   const updater = useCallback(
     (fn: (prev: AppData) => AppData) => {
@@ -368,6 +375,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           cats,
           reminders: prev.reminders.filter((reminder) => reminder.catId !== catId),
           logs: prev.logs.filter((log) => log.catId !== catId),
+          tasks: prev.tasks.filter((task) => task.catId !== catId),
+          healthEntries: prev.healthEntries.filter((entry) => entry.catId !== catId),
           settings: {
             ...prev.settings,
             activeCatId:
@@ -960,13 +969,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     lang,
     error,
     storageError,
+    syncError,
     toast,
     t,
     notify,
     dismissToast,
     dismissStorageError,
     retry,
-    recoverWithDemo,
+    retrySync,
     updateSettings,
     setActiveCat,
     addCat,

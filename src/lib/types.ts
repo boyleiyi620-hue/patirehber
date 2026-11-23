@@ -1,6 +1,6 @@
 /**
  * PatiRehber — veri modelleri
- * Tüm veriler tarayıcıda (LocalStorage) tutulur; backend yoktur.
+ * Hesap verileri Supabase ile eşitlenir; LocalStorage cihazdaki yerel kopyadır.
  */
 
 export type ThemeMode = "light" | "dark" | "system";

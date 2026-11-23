@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     template: "%s · PatiRehber",
   },
   description:
-    "Kedinizin mama, su, kum, aşı ve kilo takibini tek yerden yönetin. 51 ırk rehberi, porsiyon hesaplayıcı, hatırlatıcılar ve acil durum bilgileri. Çevrimdışı çalışır, veriler yalnızca cihazınızda kalır.",
+    "Kedinizin mama, su, kum, aşı ve kilo takibini tek yerden yönetin. 51 ırk rehberi, porsiyon hesaplayıcı, hatırlatıcılar ve acil durum bilgileri. Kayıtlar hesabınızla eşitlenir.",
   applicationName: "PatiRehber",
   keywords: [
     "kedi bakımı",
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "PatiRehber — Kedi Bakım Rehberi",
     description:
-      "Mama, su, kum, aşı ve kilo takibi; 51 ırk rehberi ve porsiyon hesaplayıcı. Yalnızca cihazınızda çalışır.",
+      "Mama, su, kum, aşı ve kilo takibi; 51 ırk rehberi, porsiyon hesaplayıcı ve hesaplar arası eşitleme.",
   },
   robots: {
     index: true,

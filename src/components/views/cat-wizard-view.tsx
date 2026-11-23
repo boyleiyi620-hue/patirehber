@@ -453,11 +453,11 @@ export function CatWizardView() {
               <div className="rounded-xl border border-border bg-muted/30 p-3.5">
                 <p className="flex items-center gap-1.5 text-xs font-bold">
                   <ShieldCheck className="h-4 w-4 text-accent" aria-hidden="true" />
-                  Verilerin cihazında kalır
+                      Verilerin hesabınla eşitlenir
                 </p>
                 <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                  PatiRehber hesap oluşturmaz; tüm bilgiler yalnızca bu tarayıcının
-                  LocalStorage alanında saklanır.
+                  Kayıtların Supabase hesabında ve bu cihazdaki yerel kopyada tutulur.
+                  Arkadaşlara sağlık ve iletişim bilgileri gösterilmez.
                 </p>
               </div>
             </>

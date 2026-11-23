@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/";
+  const next = searchParams.get("next") === "/auth/reset" ? "/auth/reset" : "/";
 
   if (code) {
     const cookieStore = await cookies();
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     );
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      return NextResponse.redirect(new URL(next, origin));
     }
   }
   return NextResponse.redirect(`${origin}/auth?error=callback`);

@@ -178,7 +178,7 @@ export function SettingsView() {
               <FieldHint>
                 {nameSaved
                   ? "Kaydedildi ✓"
-                  : "Bu isim yalnızca cihazında saklanır."}
+                  : "Bu isim hesabına kaydedilir ve eşitlenir."}
               </FieldHint>
             </div>
 
@@ -414,7 +414,7 @@ export function SettingsView() {
         <SettingsCard
           icon={<Database className="h-4 w-4" aria-hidden="true" />}
           title={t("settings.data")}
-          description="Verilerin yalnızca bu cihazda saklanır. Düzenli yedek alman önerilir."
+          description="Verilerin hesabında eşitlenir; bu cihazda çevrimdışı kullanım için bir kopyası tutulur."
         >
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -473,7 +473,7 @@ export function SettingsView() {
                   Verileri sıfırla
                 </p>
                 <p className="text-[11px] text-muted-foreground">
-                  Demo veriye dön veya tüm kayıtları sil.
+                  Bu hesaptaki tüm kedi ve bakım kayıtlarını sil.
                 </p>
               </div>
               <Button
@@ -520,8 +520,9 @@ export function SettingsView() {
 
             <p>
               PatiRehber; mama, su, kum, aşı, kilo ve hatırlatıcı takibini tek
-              yerde toplar. Tüm veriler tarayıcının LocalStorage alanında
-              saklanır; sunucuya gönderilmez.
+              yerde toplar. Giriş yaptığında veriler hesabınla Supabase üzerinde
+              eşitlenir; çevrimdışı kullanım ve uygulama ayarları için bu cihazda
+              da bir kopya tutulur.
             </p>
 
             <dl className="grid gap-2 sm:grid-cols-2">
@@ -544,9 +545,9 @@ export function SettingsView() {
             <div className="flex items-start gap-2 rounded-xl border border-accent/30 bg-accent/10 p-2.5 text-[11px] text-emerald-900 dark:text-emerald-100">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               <p>
-                <strong>Gizlilik:</strong> Hesap yok, takip yok, reklam yok.
-                Tarayıcı verilerini temizlersen kayıtların da silinir; düzenli
-                yedek al.
+                <strong>Gizlilik:</strong> Arkadaşlarla yalnızca kedi adı, ırkı ve
+                yaşı paylaşılır. Fotoğraf, sağlık geçmişi, kilo, mikroçip, notlar
+                ve veteriner bilgileri özeldir. JSON yedeğini güvenli yerde tut.
               </p>
             </div>
 
@@ -581,7 +582,7 @@ export function SettingsView() {
         open={resetOpen}
         onOpenChange={setResetOpen}
         title="Verileri sıfırla"
-        description="Bu işlem geri alınamaz. Devam etmeden önce yedek almanı öneririz."
+        description="Bu işlem geri alınamaz; bu hesaptaki kayıtlar cihazdan ve bulut hesabından silinir. Önce yedek almanı öneririz."
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setResetOpen(false)}>
@@ -598,7 +599,7 @@ export function SettingsView() {
           <div className="flex items-start gap-2 rounded-xl bg-destructive/10 p-3 text-xs text-danger">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <p>
-              Tüm kedi profilleri, hatırlatıcılar ve bakım kayıtları kalıcı olarak silinecek.
+              Tüm kedi profilleri, hatırlatıcılar ve bakım kayıtları bu cihazdan ve bulut hesabından kalıcı olarak silinecek.
             </p>
           </div>
 
@@ -607,8 +608,7 @@ export function SettingsView() {
               <span className="text-xs">
                 <span className="block font-bold">Tüm veriler silinecek</span>
                 <span className="text-muted-foreground">
-                  Tüm kedi profilleri, hatırlatıcılar ve bakım kayıtları kalıcı olarak
-                  silinecek. Sahte/örnek veri kullanılmaz.
+                  Tüm kedi profilleri, hatırlatıcılar ve bakım kayıtları kalıcı olarak silinecek.
                 </span>
               </span>
             </div>

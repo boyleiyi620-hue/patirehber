@@ -1,8 +1,8 @@
 # 🐾 PatiRehber
 
-Mobil öncelikli, PWA destekli kedi bakım rehberi. Mama, su, kum, aşı, kilo ve veteriner takibini tek yerde toplar; 51 ırkın bakım bilgilerini, hesaplayıcıları ve acil durum rehberini sunar.
+Mobil öncelikli, PWA destekli kedi bakım rehberi. Mama, su, kum, aşı, kilo ve veteriner takibini tek yerde toplar; 51 ırkın bakım bilgilerini, hesaplayıcıları, arkadaş paylaşımını ve acil durum rehberini sunar.
 
-Tüm veriler **yalnızca tarayıcının LocalStorage alanında** saklanır. Hesap, sunucu, analitik veya reklam yoktur.
+Kullanıcılar e-posta veya Google ile giriş yapar. Kedi profilleri ve bakım kayıtları Supabase hesabıyla eşitlenir; tarayıcıda ayrıca yerel bir kopya tutulur. Arkadaşlarla yalnızca kedinin adı, ırkı ve yaşı paylaşılır.
 
 ---
 
@@ -91,9 +91,15 @@ Tüm veriler **yalnızca tarayıcının LocalStorage alanında** saklanır. Hesa
 - Bildirim izni ve tür bazlı bildirim tercihleri, sessiz saatler
 - PWA kurulum önerisi
 - JSON dışa aktarma / içe aktarma
-- Demo veriye dönme veya tüm verileri silme
+- Tüm verileri cihazdan ve hesaptan silme
 - Depolama boyutu ve kayıt sayıları
 - Hakkında, gizlilik ve sürüm bilgisi
+
+### Arkadaşlar ve gizlilik
+- Arkadaş koduyla istek gönderme ve kabul etme
+- Kabul edilmiş arkadaşlara yalnızca kedi adı, ırkı ve yaşı gösterilir
+- Fotoğraflar, sağlık/aşı kayıtları, kilo geçmişi, mikroçip, notlar ve veteriner bilgileri özel kalır
+- Ham tablo erişimleri RLS ile sahip hesabına sınırlıdır; arkadaş görünümü güvenli, alanları izin listesine alınmış RPC'lerden gelir
 
 ---
 
@@ -132,7 +138,7 @@ Tüm veriler **yalnızca tarayıcının LocalStorage alanında** saklanır. Hesa
 | Bileşenler | shadcn/ui esintili, Radix'siz özel primitives (`cva`, `clsx`, `tailwind-merge`) |
 | İkonlar | Lucide React |
 | Animasyon | CSS geçişleri ve keyframe'ler |
-| Veri | LocalStorage (backend yok) |
+| Veri | Supabase Auth + PostgreSQL; LocalStorage yerel kopya |
 | PWA | `manifest.json`, özel service worker |
 | Yazı tipi | Nunito (Google Fonts) |
 
@@ -206,6 +212,10 @@ patirehber/
 │  └─ sw.js                      # Service worker
 ├─ scripts/
 │  └─ generate-icons.mjs         # Bağımlılıksız PNG üreteci
+├─ supabase/
+│  └─ migrations/                # Veritabanı güvenlik ve paylaşım değişiklikleri
+├─ .github/workflows/
+│  └─ ci.yml                     # Lint, typecheck, test ve üretim derlemesi
 ├─ src/
 │  ├─ app/
 │  │  ├─ layout.tsx              # Metadata, tema script'i, provider'lar
@@ -253,7 +263,9 @@ patirehber/
 
 ## Veri modeli ve saklama
 
-LocalStorage anahtarı:
+Supabase, hesap verilerinin kalıcı kaynağıdır. Tarayıcıdaki `LocalStorage` uygulama kopyasını tutar; ilk yüklemede güncel veriler sunucudan alınır. İlk yükleme çevrimiçi erişim gerektirir; çevrimdışı açılışta kayıtları geri yükleme garanti edilmez. Eşitleme hataları uygulama içinde gösterilir ve yeniden denenebilir.
+
+Yerel kopya anahtarı:
 
 ```text
 patirehber:data:v1
@@ -268,6 +280,8 @@ interface AppData {
   cats: Cat[];
   reminders: Reminder[];
   logs: DailyLog[];
+  tasks: Task[];
+  healthEntries: HealthEntry[];
   meta: { createdAt: string; lastOpenedAt: string };
 }
 ```
@@ -277,9 +291,11 @@ interface AppData {
 - `DailyLog`: günlük mama sayısı, su, kum, oyun dakikaları (tarih + kedi başına tek kayıt).
 - `Settings`: tema, dil, kullanıcı adı, aktif kedi, öğün hedefi, porsiyon gramajı, bildirim tercihleri.
 
-Tüm yazma işlemleri `AppProvider` üzerinden yapılır ve her değişiklik otomatik olarak kaydedilir. Bozuk JSON veya eksik alanlar `normalizeData()` ile onarılır; okunamayan veri için kurtarma ekranı gösterilir.
+Uygulama `AppProvider` üzerinden değişiklikleri yerel kopyaya ve Supabase'e kaydeder. Eşitleme sıralı yürütülür; mevcut kayıtların tamamı başarıyla yazılmadan uzak silmeler uygulanmaz. Böylece yarım kalmış bir yükleme, eski verilerin topluca silinmesine yol açmaz.
 
-Yedekleme: **Ayarlar → Veriler → JSON dışa aktar**. Aynı bölümden dosya içe aktarılabilir; içe aktarılan veri şema doğrulamasından geçer.
+Yedekleme: **Ayarlar → Veriler → JSON dışa aktar**. Aynı bölümden dosya içe aktarılabilir; içe aktarılan veri şema doğrulamasından geçer. Yedek, özel sağlık bilgileri de içerebilir; güvenli yerde saklanmalıdır.
+
+Yerel kontroller: `npm run lint`, `npm run typecheck`, `npm test` ve `npm run build`. GitHub Actions bu dört kontrolü her push ve pull request'te çalıştırır. Veritabanı değişiklikleri `supabase/migrations/` altında sürümlenir.
 
 ---
 
@@ -343,8 +359,8 @@ Ayarlar → Veriler → Sıfırla ekranından **demo veriye dön** veya **boş b
 
 ## Bilinen sınırlamalar
 
-- Backend yoktur; farklı cihazlar arasında senkronizasyon yoktur.
-- LocalStorage temizlenirse veriler silinir. Düzenli JSON yedeği önerilir.
+- Kayıtları ilk açılışta sunucudan yüklemek için internet bağlantısı gerekir; PWA önbelleği çevrimdışı veri erişimini garanti etmez.
+- Tarayıcı verilerini temizlemek yerel kopyayı siler; çevrimiçi girişte kayıtlar Supabase hesabından yeniden yüklenir. Düzenli JSON yedeği önerilir.
 - Fotoğraflar Base64 olarak saklanır ve depolama kotasını hızla doldurabilir; büyük galerilerde dikkatli olun.
 - Bildirimler uygulama kapalıyken çalışmaz (arka plan push backend'i yoktur).
 - İngilizce çeviri yalnızca arayüz metinlerini kapsar; rehber/ırk içerikleri Türkçedir.
@@ -354,7 +370,7 @@ Ayarlar → Veriler → Sıfırla ekranından **demo veriye dön** veya **boş b
 
 ## Gizlilik
 
-PatiRehber hesap oluşturmaz, veri toplamaz, takip veya reklam kullanmaz. Tüm kedi profilleri, bakım kayıtları ve fotoğraflar yalnızca kullanıcının tarayıcısında saklanır. Dışa aktarılan JSON dosyası da yalnızca kullanıcının cihazında oluşturulur.
+PatiRehber hesap girişi ve Supabase eşitlemesi kullanır; bu nedenle kayıtlar yalnızca tarayıcıda kalmaz. RLS, kullanıcıların kendi hesap satırlarına erişmesini sağlar. Arkadaşlar yalnızca kedi adı, ırkı ve yaşı görür; fotoğraf, sağlık/aşı geçmişi, kilo, mikroçip, notlar, ilaçlar ve veteriner bilgileri paylaşılmaz. JSON dışa aktarma dosyası tüm verileri içerebileceğinden özel kabul edilmelidir. Bu proje reklam veya izleme SDK'sı eklemez.
 
 ---
 

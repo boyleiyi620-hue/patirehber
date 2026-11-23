@@ -1038,7 +1038,7 @@ function CatProfileInner({ cat }: { cat: Cat }) {
             <div>
               <CardTitle>Fotoğraf galerisi</CardTitle>
               <p className="text-xs text-muted-foreground">
-                {cat.gallery.length}/12 fotoğraf · anılar cihazında saklanır
+                {cat.gallery.length}/12 fotoğraf · hesabınla eşitlenir
               </p>
             </div>
             <label

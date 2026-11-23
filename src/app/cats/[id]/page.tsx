@@ -7,6 +7,11 @@ export const metadata: Metadata = {
     "Kedi profil bilgileri, ırka özel bakım notları, beslenme planı, aşı takvimi, kilo grafiği ve fotoğraf galerisi.",
 };
 
-export default function CatProfilePage({ params }: { params: { id: string } }) {
-  return <CatProfileView catId={params.id} />;
+export default async function CatProfilePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  return <CatProfileView catId={id} />;
 }

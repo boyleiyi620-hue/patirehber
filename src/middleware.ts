@@ -29,7 +29,6 @@ export async function middleware(request: NextRequest) {
 
   // Protect app routes: redirect unauthenticated users to /auth
   const isAuthRoute = request.nextUrl.pathname.startsWith("/auth");
-  const isPublic = request.nextUrl.pathname === "/" ? false : false;
   if (!user && !isAuthRoute && request.nextUrl.pathname !== "/auth") {
     // Allow static assets and api
     if (!request.nextUrl.pathname.startsWith("/_next") && !request.nextUrl.pathname.startsWith("/icons") && request.nextUrl.pathname !== "/manifest.json" && request.nextUrl.pathname !== "/sw.js" && request.nextUrl.pathname !== "/icon.svg" && request.nextUrl.pathname !== "/offline") {
@@ -38,7 +37,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
   }
-  if (user && isAuthRoute) {
+  if (user && isAuthRoute && request.nextUrl.pathname !== "/auth/reset") {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

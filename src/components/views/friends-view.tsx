@@ -20,6 +20,7 @@ import {
   removeFriendship,
   getFriendProfile,
   getFriendCats,
+  type FriendCat,
   type FriendshipRow,
   type FriendProfile,
 } from "@/lib/friends";
@@ -35,7 +36,7 @@ export function FriendsView() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [friendProfile, setFriendProfile] = useState<FriendProfile | null>(null);
-  const [friendCats, setFriendCats] = useState<any[]>([]);
+  const [friendCats, setFriendCats] = useState<FriendCat[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
 
   const load = async () => {
@@ -154,8 +155,8 @@ export function FriendsView() {
                 <p>
                   <span className="font-semibold">Ad:</span> {friendProfile?.display_name ?? "—"}
                 </p>
-                <p>
-                  <span className="font-semibold">Kod:</span> {friendProfile?.friend_code ?? "—"}
+                <p className="text-xs text-muted-foreground">
+                  Arkadaş profilleri yalnızca temel bilgileri paylaşır; sağlık ve iletişim bilgileri özeldir.
                 </p>
               </CardContent>
             </Card>
@@ -178,19 +179,11 @@ export function FriendsView() {
                           <Card className="overflow-hidden card-hover">
                             <CardContent className="p-4">
                               <div className="flex items-start gap-3">
-                              {cat.photo ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={cat.photo} alt={cat.name} className="h-12 w-12 rounded-xl object-cover" />
-                              ) : (
                                 <div className="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-xl">🐱</div>
-                              )}
                               <div className="min-w-0 flex-1">
                                 <p className="font-display text-base font-extrabold">{cat.name}</p>
                                 <p className="text-xs text-muted-foreground">
                                   {breedName(cat.breedId)} · {age.label}
-                                </p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                  {cat.weight} kg · {cat.gender === "female" ? "Disi" : "Erkek"}
                                 </p>
                               </div>
                             </div>

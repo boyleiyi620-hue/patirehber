@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: "Kedi Profili",
 };
 
-export default function FriendCatPage({ params }: { params: { id: string; catId: string } }) {
-  return <FriendCatProfileView catId={params.catId} />;
+export default async function FriendCatPage({
+  params,
+}: {
+  params: Promise<{ id: string; catId: string }>;
+}) {
+  const { id, catId } = await params;
+  return <FriendCatProfileView friendId={id} catId={catId} />;
 }

@@ -51,7 +51,7 @@ export function CatsView() {
         <EmptyState
           emoji="🐾"
           title={t("cats.empty")}
-          description="İlk kedini ekleyerek mama, su, kum, aşı ve kilo takibine başla. Tüm veriler yalnızca bu cihazda saklanır."
+          description="İlk kedini ekleyerek mama, su, kum, aşı ve kilo takibine başla. Kayıtların hesabınla eşitlenir."
           action={
             <ButtonLink href="/cats/new">
               <Plus className="h-4 w-4" aria-hidden="true" />
