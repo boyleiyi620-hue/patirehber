@@ -23,6 +23,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Label, FieldHint } from "@/components/ui/label";
 import { EmptyState } from "@/components/ui/empty-state";
+import { dateKey, formatDateWithWeekday, taskCompletedOn, taskProgressOn, todayKey } from "@/lib/utils";
 
 const EMOJI_PRESETS = ["✅", "🍽️", "💧", "🧹", "🎮", "💊", "✂️", "🏥", "🧼", "🐾", "⭐", "📅"];
 
@@ -39,22 +40,12 @@ const TASK_KINDS: { id: string; label: string; emoji: string }[] = [
 
 type Filter = "today" | "all" | "done";
 
-function formatRemaining(completedAt?: string): string | null {
-  if (!completedAt) return null;
-  const end = new Date(completedAt).getTime() + 24 * 60 * 60 * 1000;
-  const diff = end - Date.now();
-  if (diff <= 0) return "Yakında silinecek";
-  const hours = Math.floor(diff / (60 * 60 * 1000));
-  if (hours >= 1) return `${hours} saat sonra silinecek`;
-  const mins = Math.max(1, Math.floor(diff / (60 * 1000)));
-  return `${mins} dk sonra silinecek`;
-}
-
 export function TasksView() {
   const {
     tasks,
     cats,
     activeCatId,
+    activeDate,
     addTask,
     tapTask,
     undoTask,
@@ -149,22 +140,36 @@ export function TasksView() {
     resetForm();
   };
 
+  const relevantTasks = useMemo(() => tasks.filter((task) => {
+    const createdDate = dateKey(new Date(task.createdAt));
+    if (activeDate === todayKey()) {
+      if (createdDate > activeDate) return false;
+      const completedDate = task.completedAt ? dateKey(new Date(task.completedAt)) : undefined;
+      const hasTodayProgress = task.progressByDate?.some((entry) => entry.date === activeDate) ?? false;
+      if (completedDate && completedDate !== activeDate && !hasTodayProgress && (!task.repeat || task.repeat === "none")) return false;
+      return true;
+    }
+    return task.dueDate === activeDate ||
+      createdDate === activeDate ||
+      (task.completedAt ? dateKey(new Date(task.completedAt)) === activeDate : false) ||
+      Boolean(task.progressByDate?.some((entry) => entry.date === activeDate)) ||
+      (task.repeat !== "none" && task.repeat !== undefined && createdDate <= activeDate);
+  }), [activeDate, tasks]);
+
   const filtered = useMemo(() => {
-    const sorted = [...tasks].sort((a, b) => {
-      // tamamlanmamış önce, sonra tarihe göre
-      const aDone = a.completedAt ? 1 : 0;
-      const bDone = b.completedAt ? 1 : 0;
+    const sorted = [...relevantTasks].sort((a, b) => {
+      const aDone = taskCompletedOn(a, activeDate) ? 1 : 0;
+      const bDone = taskCompletedOn(b, activeDate) ? 1 : 0;
       if (aDone !== bDone) return aDone - bDone;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-    if (filter === "done") return sorted.filter((t) => !!t.completedAt);
-    if (filter === "today")
-      return sorted.filter((t) => !t.completedAt);
+    if (filter === "done") return sorted.filter((task) => taskCompletedOn(task, activeDate));
+    if (filter === "today") return sorted.filter((task) => !taskCompletedOn(task, activeDate));
     return sorted;
-  }, [tasks, filter]);
+  }, [relevantTasks, filter, activeDate]);
 
-  const todayCount = tasks.filter((t) => !t.completedAt).length;
-  const doneCount = tasks.filter((t) => !!t.completedAt).length;
+  const todayCount = relevantTasks.filter((task) => !taskCompletedOn(task, activeDate)).length;
+  const doneCount = relevantTasks.filter((task) => taskCompletedOn(task, activeDate)).length;
 
   return (
     <div className="space-y-5">
@@ -172,9 +177,11 @@ export function TasksView() {
         emoji="✅"
         title="Görevler"
         subtitle={
-          tasks.length
-            ? `${todayCount} aktif · ${doneCount} tamamlandı`
-            : "Kendine bakım görevleri oluştur"
+          activeDate !== todayKey()
+            ? `${formatDateWithWeekday(activeDate)} · ${todayCount} aktif · ${doneCount} tamamlandı`
+            : tasks.length
+              ? `${todayCount} aktif · ${doneCount} tamamlandı`
+              : "Kendine bakım görevleri oluştur"
         }
         action={
           <Button size="sm" onClick={openNew}>
@@ -236,8 +243,8 @@ export function TasksView() {
         <ul className="space-y-2.5" aria-label="Görev listesi">
           {filtered.map((task) => {
             const cat = cats.find((c) => c.id === task.catId);
-            const done = !!task.completedAt;
-            const remaining = formatRemaining(task.completedAt);
+            const done = taskCompletedOn(task, activeDate);
+            const progress = taskProgressOn(task, activeDate);
             return (
               <li key={task.id}>
                 <Card
@@ -252,7 +259,7 @@ export function TasksView() {
                           done
                             ? "Görevi geri al"
                             : task.target > 1
-                              ? `Görevi ilerlet (${task.progress}/${task.target})`
+                              ? `Görevi ilerlet (${progress}/${task.target})`
                               : "Görevi tamamla"
                         }
                         className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-xl transition active:scale-95 ${
@@ -301,10 +308,10 @@ export function TasksView() {
                           <div className="mt-2">
                             <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
                               <span>
-                                İlerleme {task.progress}/{task.target}
+                                İlerleme {progress}/{task.target}
                               </span>
                               <span>
-                                {Math.round((task.progress / task.target) * 100)}%
+                                {Math.round((progress / task.target) * 100)}%
                               </span>
                             </div>
                             <div className="flex gap-1">
@@ -312,7 +319,7 @@ export function TasksView() {
                                 <span
                                   key={i}
                                   className={`h-1.5 flex-1 rounded-full transition ${
-                                    i < task.progress
+                                    i < progress
                                       ? "bg-primary"
                                       : "bg-muted"
                                   }`}
@@ -336,11 +343,6 @@ export function TasksView() {
                             {TASK_KINDS.find((k) => k.id === task.kind)?.label ??
                               "Görev"}
                           </Badge>
-                          {done && remaining ? (
-                            <span className="text-[10px] font-medium text-muted-foreground">
-                              {remaining}
-                            </span>
-                          ) : null}
                           {done ? (
                             <button
                               type="button"

@@ -101,6 +101,7 @@ function CatProfileInner({ cat }: { cat: Cat }) {
   const router = useRouter();
   const {
     activeCatId,
+    activeDate,
     setActiveCat,
     logs,
     settings,
@@ -150,7 +151,7 @@ function CatProfileInner({ cat }: { cat: Cat }) {
 
   // Aşı formu
   const [vName, setVName] = useState("Karma (FVRCP)");
-  const [vDate, setVDate] = useState(todayKey());
+  const [vDate, setVDate] = useState(activeDate);
   const [vNext, setVNext] = useState("");
   const [vError, setVError] = useState<string | null>(null);
 
@@ -164,7 +165,7 @@ function CatProfileInner({ cat }: { cat: Cat }) {
   // Sağlık günlüğü formu
   const [healthType, setHealthType] = useState<"symptom" | "vet-visit" | "medication" | "note">("note");
   const [healthTitle, setHealthTitle] = useState("");
-  const [healthDate, setHealthDate] = useState(todayKey());
+  const [healthDate, setHealthDate] = useState(activeDate);
   const [healthNote, setHealthNote] = useState("");
 
   // Notlar
@@ -175,9 +176,9 @@ function CatProfileInner({ cat }: { cat: Cat }) {
   const age = getCatAge(cat.birthDate);
   const breed = getBreed(cat.breedId);
   const isActive = activeCatId === cat.id;
-  const log = findLog(logs, cat.id);
+  const log = findLog(logs, cat.id, activeDate);
   const score = dayScore(log, settings.mealsPerDay);
-  const streak = computeStreak(logs, cat.id, settings.mealsPerDay);
+  const streak = computeStreak(logs, cat.id, settings.mealsPerDay, activeDate);
   const catReminders = reminders.filter((reminder) => reminder.catId === cat.id);
   const portion = calculatePortion({
     weightKg: cat.weight,
@@ -194,7 +195,7 @@ function CatProfileInner({ cat }: { cat: Cat }) {
     b.date.localeCompare(a.date),
   );
   const overdueVaccines = cat.vaccinations.filter(
-    (vaccine) => vaccine.nextDate && vaccine.nextDate < todayKey(),
+    (vaccine) => vaccine.nextDate && vaccine.nextDate < activeDate,
   );
 
   const openEdit = () => {
@@ -293,7 +294,7 @@ function CatProfileInner({ cat }: { cat: Cat }) {
     setVaccineOpen(false);
     setVError(null);
     setVNext("");
-    setVDate(todayKey());
+    setVDate(activeDate);
     setVName("Karma (FVRCP)");
   };
 
@@ -872,7 +873,7 @@ function CatProfileInner({ cat }: { cat: Cat }) {
             ) : (
               <ul className="space-y-2">
                 {sortedVaccines.map((vaccine) => {
-                  const overdue = vaccine.nextDate && vaccine.nextDate < todayKey();
+                  const overdue = vaccine.nextDate && vaccine.nextDate < activeDate;
                   const soon =
                     vaccine.nextDate &&
                     !overdue &&
@@ -1519,7 +1520,7 @@ function CatProfileInner({ cat }: { cat: Cat }) {
                 id="vaccine-date"
                 type="date"
                 value={vDate}
-                max={todayKey()}
+                max={activeDate}
                 onChange={(event) => setVDate(event.target.value)}
               />
             </div>
@@ -1603,7 +1604,7 @@ function CatProfileInner({ cat }: { cat: Cat }) {
                     id="health-date"
                     type="date"
                     value={healthDate}
-                    max={todayKey()}
+                    max={activeDate}
                     onChange={(e) => setHealthDate(e.target.value)}
                   />
                 </div>
@@ -1643,7 +1644,7 @@ function CatProfileInner({ cat }: { cat: Cat }) {
                   });
                   setHealthTitle("");
                   setHealthNote("");
-                  setHealthDate(todayKey());
+                  setHealthDate(activeDate);
                 }}
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />

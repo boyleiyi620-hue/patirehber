@@ -10,15 +10,17 @@ export function WeeklyChart({
   mealsTarget,
   days = 7,
   showHeader = true,
+  throughDate = todayKey(),
 }: {
   logs: DailyLog[];
   catId: string;
   mealsTarget: number;
   days?: number;
   showHeader?: boolean;
+  throughDate?: string;
 }) {
-  const series = buildSeries(logs, catId, mealsTarget, days);
-  const today = todayKey();
+  const series = buildSeries(logs, catId, mealsTarget, days, throughDate);
+  const today = throughDate;
   const totalMeals = series.reduce((sum, day) => sum + day.meals, 0);
   const waterDays = series.filter((day) => day.water).length;
 
@@ -29,7 +31,7 @@ export function WeeklyChart({
           <div>
             <CardTitle>Haftalık takip</CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
-              Son 7 gün · mama, su ve kum
+              {throughDate === todayKey() ? "Son 7 gün" : "Seçilen gün dâhil önceki 7 gün"} · mama, su ve kum
             </p>
           </div>
           <div className="flex shrink-0 gap-1.5">
@@ -42,7 +44,7 @@ export function WeeklyChart({
         <div
           className="flex items-end justify-between gap-1.5"
           role="img"
-          aria-label={`Son ${days} günlük mama ve su takibi grafiği`}
+          aria-label={`${throughDate === todayKey() ? "Son" : "Seçilen gün dâhil önceki"} ${days} günlük mama ve su takibi grafiği`}
         >
           {series.map((day) => {
             const isToday = day.date === today;

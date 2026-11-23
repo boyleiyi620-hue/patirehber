@@ -8,6 +8,7 @@ import type {
   DailyLog,
   Reminder,
   ReminderType,
+  Task,
 } from "./types";
 
 /** Tailwind sınıflarını güvenli biçimde birleştirir (shadcn/ui standardı) */
@@ -254,6 +255,11 @@ export function isCompletedToday(reminder: Reminder): boolean {
   return reminder.lastCompleted === todayKey();
 }
 
+/** Hatırlatıcı belirli bir tarihte tamamlandı mı? */
+export function isReminderCompletedOn(reminder: Reminder, date: string): boolean {
+  return reminder.lastCompleted === date || reminder.history.includes(date);
+}
+
 /**
  * Bir sonraki gerçekleşme zamanı.
  * Bugün saati geçmişse bir sonraki uygun güne atlar.
@@ -340,6 +346,27 @@ export function findLog(
   return logs.find((l) => l.catId === catId && l.date === date);
 }
 
+/** Görevin belirtilen gündeki ilerlemesi; eski kayıtlar bugüne uyarlanır. */
+export function taskProgressOn(task: Task, date: string): number {
+  const entry = task.progressByDate?.find((item) => item.date === date);
+  if (entry) return Math.min(task.target, entry.progress);
+  if (task.completedAt && dateKey(new Date(task.completedAt)) === date) {
+    return Math.min(task.target, task.progress);
+  }
+  return date === todayKey() ? Math.min(task.target, task.progress) : 0;
+}
+
+/** Görev o gün tamamlandı mı? */
+export function taskCompletedOn(task: Task, date: string): boolean {
+  const entry = task.progressByDate?.find((item) => item.date === date);
+  if (entry) return Boolean(entry.completedAt) || entry.progress >= task.target;
+  return Boolean(
+    task.completedAt &&
+      dateKey(new Date(task.completedAt)) === date &&
+      task.progress >= task.target,
+  );
+}
+
 /** 0-100 arası günlük bakım puanı */
 export function dayScore(log: DailyLog | undefined, mealsTarget: number): number {
   if (!log) return 0;
@@ -356,10 +383,11 @@ export function buildSeries(
   catId: string,
   mealsTarget: number,
   days = 7,
+  throughDate = todayKey(),
 ) {
-  const today = new Date();
+  const endDate = parseDateKey(throughDate);
   return Array.from({ length: days }, (_, index) => {
-    const date = addDays(today, -(days - 1 - index));
+    const date = addDays(endDate, -(days - 1 - index));
     const key = dateKey(date);
     const log = logs.find((l) => l.catId === catId && l.date === key);
     return {
@@ -384,12 +412,13 @@ export function computeStreak(
   logs: DailyLog[],
   catId: string,
   mealsTarget: number,
+  throughDate = todayKey(),
 ): number {
   const map = new Map(logs.filter((l) => l.catId === catId).map((l) => [l.date, l]));
-  const base = new Date();
-  const today = map.get(dateKey(base));
-  // Bugün henüz tamamlanmadıysa dünden saymaya başla
-  if (!today || dayScore(today, mealsTarget) < 80) {
+  const base = parseDateKey(throughDate);
+  const selectedDay = map.get(dateKey(base));
+  // Seçilen gün henüz tamamlanmadıysa bir önceki günden saymaya başla.
+  if (!selectedDay || dayScore(selectedDay, mealsTarget) < 80) {
     base.setDate(base.getDate() - 1);
   }
   let streak = 0;

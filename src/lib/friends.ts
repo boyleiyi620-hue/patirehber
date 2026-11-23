@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { Cat } from "@/lib/types";
+import type { Cat, DailyLog, HealthEntry, Reminder, Task } from "@/lib/types";
 
 export interface FriendshipRow {
   id: string;
@@ -17,7 +17,11 @@ export interface FriendProfile {
 export type FriendCat = Pick<Cat, "id" | "name" | "breedId" | "birthDate">;
 
 export interface FriendCatDetail {
-  cat: FriendCat;
+  cat: Cat;
+  dailyLogs: DailyLog[];
+  tasks: Task[];
+  reminders: Reminder[];
+  healthEntries: HealthEntry[];
 }
 
 export async function getMyFriendCode(_userId: string): Promise<string> {
@@ -96,8 +100,96 @@ export async function getFriendCatDetail(
   friendId: string,
   catId: string,
 ): Promise<FriendCatDetail> {
-  const cats = await getFriendCats(friendId);
-  const cat = cats.find((item) => item.id === catId);
-  if (!cat) throw new Error("Bu kediye erişim yok veya kedi bulunamadı.");
-  return { cat };
+  const { data, error } = await createClient().rpc("get_friend_cat_detail", {
+    target_user_id: friendId,
+    target_cat_id: catId,
+  });
+  if (error) throw new Error(error.message);
+  if (!data || typeof data !== "object" || !(data as any).cat) {
+    throw new Error("Bu kediye erişim yok veya kedi bulunamadı.");
+  }
+
+  const result = data as any;
+  const row = result.cat;
+  const cat: Cat = {
+    id: row.id,
+    name: row.name,
+    breedId: row.breed_id,
+    birthDate: row.birth_date ?? new Date().toISOString().slice(0, 10),
+    gender: row.gender === "male" ? "male" : "female",
+    weight: Number(row.weight ?? 0),
+    neutered: Boolean(row.neutered),
+    activity: row.activity ?? "medium",
+    photo: row.photo ?? undefined,
+    gallery: Array.isArray(row.gallery) ? row.gallery : [],
+    healthNotes: row.health_notes ?? "",
+    notes: row.notes ?? "",
+    color: row.color ?? undefined,
+    microchip: row.microchip ?? undefined,
+    insurance: row.insurance ?? undefined,
+    allergies: row.allergies ?? undefined,
+    medications: row.medications ?? undefined,
+    vet: row.vet_name || row.vet_clinic || row.vet_phone || row.vet_address
+      ? { name: row.vet_name ?? "", clinic: row.vet_clinic ?? "", phone: row.vet_phone ?? "", address: row.vet_address ?? undefined }
+      : undefined,
+    adoptedAt: row.adopted_at ?? undefined,
+    vaccinations: (result.vaccinations ?? []).map((item: any) => ({
+      id: item.id, name: item.name, date: item.date, nextDate: item.next_date ?? undefined,
+    })),
+    weightHistory: (result.weight_entries ?? []).map((item: any) => ({
+      id: item.id, date: item.date, kg: Number(item.kg),
+    })),
+    createdAt: row.created_at,
+  };
+
+  const dailyLogs: DailyLog[] = (result.daily_logs ?? []).map((item: any) => ({
+    id: item.id,
+    catId: item.cat_id,
+    date: item.date,
+    mealsGiven: item.meals_given ?? 0,
+    waterChanged: Boolean(item.water_changed),
+    litterCleaned: Boolean(item.litter_cleaned),
+    playMinutes: item.play_minutes ?? 0,
+    note: item.note ?? undefined,
+  }));
+  const tasks: Task[] = (result.tasks ?? []).map((item: any) => ({
+    id: item.id,
+    catId: item.cat_id,
+    title: item.title,
+    emoji: item.emoji ?? "✅",
+    kind: item.kind ?? "custom",
+    target: item.target ?? 1,
+    progress: item.progress ?? 0,
+    progressByDate: item.progress_by_date ?? [],
+    note: item.note ?? undefined,
+    repeat: item.repeat ?? "none",
+    priority: item.priority ?? "medium",
+    dueDate: item.due_date ?? undefined,
+    createdAt: item.created_at,
+    completedAt: item.completed_at ?? undefined,
+  }));
+  const reminders: Reminder[] = (result.reminders ?? []).map((item: any) => ({
+    id: item.id,
+    catId: item.cat_id,
+    type: item.type,
+    title: item.title,
+    time: item.time,
+    days: item.days ?? [],
+    enabled: Boolean(item.enabled),
+    lastCompleted: item.last_completed ?? undefined,
+    streak: item.streak ?? 0,
+    history: item.history ?? [],
+    note: item.note ?? undefined,
+  }));
+  const healthEntries: HealthEntry[] = (result.health_entries ?? []).map((item: any) => ({
+    id: item.id,
+    catId: item.cat_id,
+    date: item.date,
+    type: item.type ?? "note",
+    title: item.title,
+    note: item.note ?? undefined,
+    createdAt: item.created_at,
+  }));
+
+  return { cat, dailyLogs, tasks, reminders, healthEntries };
 }

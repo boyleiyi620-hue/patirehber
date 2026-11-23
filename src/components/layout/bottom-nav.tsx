@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Bell,
   BookOpen,
+  CalendarDays,
   Cat,
   Home,
   ListChecks,
@@ -24,6 +25,7 @@ const items: Array<{
   { href: "/", labelKey: "nav.home", icon: Home, exact: true },
   { href: "/cats", labelKey: "nav.cats", icon: Cat },
   { href: "/guide", labelKey: "nav.guide", icon: BookOpen },
+  { href: "/calendar", labelKey: "nav.calendar", icon: CalendarDays },
   { href: "/tasks", labelKey: "nav.tasks", icon: ListChecks },
   { href: "/reminders", labelKey: "nav.reminders", icon: Bell },
   { href: "/settings", labelKey: "nav.settings", icon: Settings },

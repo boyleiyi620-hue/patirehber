@@ -140,6 +140,13 @@ function normalizeTask(raw: unknown, catIds: string[]): Task | null {
     : "custom";
   const target = Math.min(10, Math.max(1, Math.floor(asNumber(raw.target, 1))));
   const progress = Math.min(target, Math.max(0, Math.floor(asNumber(raw.progress, 0))));
+  const progressByDate = Array.isArray(raw.progressByDate)
+    ? raw.progressByDate.filter(isRecord).map((entry) => ({
+        date: asDateKey(entry.date),
+        progress: Math.min(target, Math.max(0, Math.floor(asNumber(entry.progress)))),
+        completedAt: entry.completedAt ? asString(entry.completedAt) : undefined,
+      }))
+    : undefined;
   const catId = asString(raw.catId);
   const completedAt = raw.completedAt ? asString(raw.completedAt) : undefined;
   // Tamamlanmış sayılan: progress >= target (completedAt de set edilmiş olmalı)
@@ -155,6 +162,7 @@ function normalizeTask(raw: unknown, catIds: string[]): Task | null {
     kind,
     target,
     progress: prog,
+    progressByDate,
     note: asString(raw.note).slice(0, 500) || undefined,
     repeat:
       raw.repeat === "daily" || raw.repeat === "weekly" ? raw.repeat : "none",
@@ -196,7 +204,7 @@ function normalizeReminder(raw: unknown, catIds: string[]): Reminder | null {
     history: Array.isArray(raw.history)
       ? raw.history
           .filter((item): item is string => typeof item === "string")
-          .slice(-90)
+          .slice()
       : [],
     note: asString(raw.note).slice(0, 500) || undefined,
     snoozedUntil:

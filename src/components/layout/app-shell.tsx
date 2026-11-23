@@ -8,6 +8,7 @@ import { BottomNav } from "./bottom-nav";
 import { AlarmOverlay } from "@/components/alarm-overlay";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/empty-state";
+import { formatDateWithWeekday } from "@/lib/utils";
 
 function LoadingScreen() {
   return (
@@ -74,6 +75,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     retrySync,
     toast,
     dismissToast,
+    activeDate,
+    isHistoricalDate,
+    returnToToday,
   } = useApp();
 
   if (pathname.startsWith("/auth")) return <>{children}</>;
@@ -105,6 +109,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         id="main-content"
         className="mx-auto w-full max-w-3xl px-4 pb-nav pt-5 sm:px-5 md:max-w-5xl md:px-6 md:pt-8 animate-fade-in"
       >
+        {isHistoricalDate ? (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-amber-50 px-4 py-3 text-amber-950 shadow-card dark:bg-amber-950/40 dark:text-amber-100">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-wide">Çalışma günü · {formatDateWithWeekday(activeDate)}</p>
+              <p className="mt-0.5 text-[11px]">Günlük bakım ve görev kayıtları bu tarihe yazılacak.</p>
+            </div>
+            <Button size="sm" variant="outline" onClick={returnToToday}>Bugüne dön</Button>
+          </div>
+        ) : null}
         {children}
       </main>
 

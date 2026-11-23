@@ -34,8 +34,9 @@ import {
   describeDays,
   formatDateShort,
   formatTimeRange,
-  isCompletedToday,
+  isReminderCompletedOn,
   isReminderDueOn,
+  parseDateKey,
   todayKey,
 } from "@/lib/utils";
 import type { Reminder, ReminderType } from "@/lib/types";
@@ -55,6 +56,8 @@ export function RemindersView() {
     cats,
     reminders,
     settings,
+    activeDate,
+    isHistoricalDate,
     updateSettings,
     toggleReminder,
     completeReminder,
@@ -71,15 +74,15 @@ export function RemindersView() {
   const [permissionBusy, setPermissionBusy] = useState(false);
   const [listOpen, setListOpen] = useState(false);
 
-  const now = useMemo(() => new Date(), []);
-  const today = todayKey();
+  const now = useMemo(() => parseDateKey(activeDate), [activeDate]);
+  const today = activeDate;
   const permission = getNotificationPermission();
 
   const dueToday = reminders.filter(
     (reminder) => reminder.enabled && isReminderDueOn(reminder, now),
   );
   const completedToday = reminders.filter(
-    (reminder) => isCompletedToday(reminder) && isReminderDueOn(reminder, now),
+    (reminder) => isReminderCompletedOn(reminder, today) && isReminderDueOn(reminder, now),
   );
   const bestStreak = reminders.reduce(
     (max, reminder) => Math.max(max, reminder.streak),
@@ -170,7 +173,7 @@ export function RemindersView() {
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         <SummaryTile
           icon={<AlarmClock className="h-4 w-4" aria-hidden="true" />}
-          label="Bugünkü görev"
+          label={isHistoricalDate ? "Seçilen günün görevi" : "Bugünkü görev"}
           value={`${completedToday.length}/${dueToday.length}`}
           tone="bg-primary/10 text-primary-strong"
         />
@@ -203,12 +206,12 @@ export function RemindersView() {
         <CardContent className="p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-bold">Bugünkü tamamlama</p>
+              <p className="text-sm font-bold">{isHistoricalDate ? "Seçilen günün" : "Bugünkü"} tamamlama</p>
               <p className="text-[11px] text-muted-foreground">
                 {dueToday.length === 0
-                  ? "Bugün için planlanmış görev yok."
+                  ? `${isHistoricalDate ? "Seçilen gün" : "Bugün"} için planlanmış görev yok.`
                   : completedToday.length === dueToday.length
-                    ? "Bugünün tüm görevleri tamamlandı, harika! 🎉"
+                    ? `${isHistoricalDate ? "Bu günün" : "Bugünün"} tüm görevleri tamamlandı, harika! 🎉`
                     : `${dueToday.length - completedToday.length} görev bekliyor.`}
               </p>
             </div>
@@ -219,7 +222,7 @@ export function RemindersView() {
           <Progress
             className="mt-2.5"
             value={todayProgress}
-            label="Bugünkü hatırlatıcı tamamlama oranı"
+            label="Seçilen günün hatırlatıcı tamamlama oranı"
           />
         </CardContent>
       </Card>
@@ -278,7 +281,7 @@ export function RemindersView() {
       >
         {(
           [
-            { value: "today", label: "Bugün", count: dueToday.length },
+            { value: "today", label: isHistoricalDate ? today : "Bugün", count: dueToday.length },
             { value: "all", label: "Tümü", count: reminders.length },
             {
               value: "off",
@@ -424,7 +427,7 @@ export function RemindersView() {
           filtered.map((reminder) => {
             const meta = REMINDER_META[reminder.type];
             const cat = cats.find((item) => item.id === reminder.catId);
-            const done = isCompletedToday(reminder);
+            const done = isReminderCompletedOn(reminder, today);
             const snoozed =
               reminder.snoozedUntil && reminder.snoozedUntil > Date.now();
 
@@ -451,7 +454,7 @@ export function RemindersView() {
                         {done ? (
                           <Badge variant="success">
                             <Check className="h-3 w-3" aria-hidden="true" />
-                            Bugün tamam
+                            {isHistoricalDate ? "Tamamlandı" : "Bugün tamam"}
                           </Badge>
                         ) : snoozed ? (
                           <Badge variant="secondary">
@@ -488,7 +491,7 @@ export function RemindersView() {
                           <Check className="h-3.5 w-3.5" aria-hidden="true" />
                           {done ? "Tamamlandı" : "Tamamla"}
                         </Button>
-                        {!done ? (
+                        {!done && !isHistoricalDate ? (
                           <Button
                             size="sm"
                             variant="outline"
@@ -573,7 +576,7 @@ export function RemindersView() {
                       </p>
                     </div>
                     <span className="text-[10px] font-medium text-muted-foreground">
-                      {date === today ? "Bugün" : formatDateShort(date)}
+                      {date === today ? (isHistoricalDate ? "Seçili gün" : "Bugün") : formatDateShort(date)}
                     </span>
                     <Check
                       className="h-3.5 w-3.5 shrink-0 text-accent"

@@ -34,6 +34,9 @@ import {
   dateKey,
   emptyLog,
   findLog,
+  parseDateKey,
+  taskCompletedOn,
+  taskProgressOn,
   todayKey,
   uid,
 } from "@/lib/utils";
@@ -78,6 +81,10 @@ interface AppContextValue {
   settings: Settings;
   activeCat: Cat | null;
   activeCatId: string | null;
+  activeDate: string;
+  isHistoricalDate: boolean;
+  setActiveDate: (date: string) => void;
+  returnToToday: () => void;
   todayLog: DailyLog | undefined;
   lang: Language;
   error: string | null;
@@ -143,8 +150,12 @@ const AppContext = createContext<AppContextValue | null>(null);
 const DEFAULT_SETTINGS = defaultSettings();
 
 /** Günlük kaydı oluşturur veya günceller */
-function upsertLog(logs: DailyLog[], catId: string, patch: TodayPatch): DailyLog[] {
-  const key = todayKey();
+function upsertLog(
+  logs: DailyLog[],
+  catId: string,
+  patch: TodayPatch,
+  key: string,
+): DailyLog[] {
   const existing = logs.find((log) => log.date === key && log.catId === catId);
   if (existing) {
     return logs.map((log) =>
@@ -154,14 +165,14 @@ function upsertLog(logs: DailyLog[], catId: string, patch: TodayPatch): DailyLog
   return [...logs, { ...emptyLog(key, catId), ...patch }];
 }
 
-/** Son 400 günden eski kayıtları buda (depolama şişmesini önler) */
-function pruneLogs(logs: DailyLog[]): DailyLog[] {
-  const limit = dateKey(addDays(new Date(), -400));
-  return logs.filter((log) => log.date >= limit);
+/** Takvim geçmişini koru; çalışma tarihi eski olsa bile kayıt silinmesin. */
+function preserveLogs(logs: DailyLog[]): DailyLog[] {
+  return logs;
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<AppData | null>(null);
+  const [activeDate, setActiveDateState] = useState(todayKey);
   const [user, setUser] = useState<any>(null);
   const [status, setStatus] = useState<AppStatus>("loading");
   const [error, setError] = useState<string | null>(null);
@@ -294,6 +305,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const dismissToast = useCallback(() => setToast(null), []);
   const dismissStorageError = useCallback(() => setStorageError(null), []);
 
+  const setActiveDate = useCallback((date: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+    if (dateKey(parseDateKey(date)) !== date || date > todayKey()) return;
+    setActiveDateState(date);
+  }, []);
+
+  const returnToToday = useCallback(() => setActiveDateState(todayKey()), []);
+
   const retry = useCallback(() => {
     if (typeof window !== "undefined") window.location.reload();
   }, []);
@@ -392,7 +411,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   const addWeight = useCallback(
-    (catId: string, kg: number, date = todayKey()) => {
+    (catId: string, kg: number, date = activeDate) => {
       if (!Number.isFinite(kg) || kg <= 0) return;
       updater((prev) => ({
         ...prev,
@@ -408,7 +427,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }));
       notify("Kilo kaydedildi.");
     },
-    [notify, updater],
+    [activeDate, notify, updater],
   );
 
   const deleteWeight = useCallback(
@@ -505,90 +524,90 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (!target) return prev;
         return {
           ...prev,
-          logs: pruneLogs(upsertLog(prev.logs, target, patch)),
+          logs: preserveLogs(upsertLog(prev.logs, target, patch, activeDate)),
         };
       });
     },
-    [updater],
+    [activeDate, updater],
   );
 
   const addMeal = useCallback(() => {
     updater((prev) => {
       const catId = prev.settings.activeCatId ?? prev.cats[0]?.id;
       if (!catId) return prev;
-      const current = findLog(prev.logs, catId);
+      const current = findLog(prev.logs, catId, activeDate);
       const next = Math.min(
         prev.settings.mealsPerDay,
         (current?.mealsGiven ?? 0) + 1,
       );
       return {
         ...prev,
-        logs: pruneLogs(upsertLog(prev.logs, catId, { mealsGiven: next })),
+        logs: preserveLogs(upsertLog(prev.logs, catId, { mealsGiven: next }, activeDate)),
       };
     });
-  }, [updater]);
+  }, [activeDate, updater]);
 
   const undoMeal = useCallback(() => {
     updater((prev) => {
       const catId = prev.settings.activeCatId ?? prev.cats[0]?.id;
       if (!catId) return prev;
-      const current = findLog(prev.logs, catId);
+      const current = findLog(prev.logs, catId, activeDate);
       return {
         ...prev,
-        logs: pruneLogs(
+        logs: preserveLogs(
           upsertLog(prev.logs, catId, {
             mealsGiven: Math.max(0, (current?.mealsGiven ?? 0) - 1),
-          }),
+          }, activeDate),
         ),
       };
     });
-  }, [updater]);
+  }, [activeDate, updater]);
 
   const toggleWater = useCallback(() => {
     updater((prev) => {
       const catId = prev.settings.activeCatId ?? prev.cats[0]?.id;
       if (!catId) return prev;
-      const current = findLog(prev.logs, catId);
+      const current = findLog(prev.logs, catId, activeDate);
       return {
         ...prev,
-        logs: pruneLogs(
-          upsertLog(prev.logs, catId, { waterChanged: !current?.waterChanged }),
+        logs: preserveLogs(
+          upsertLog(prev.logs, catId, { waterChanged: !current?.waterChanged }, activeDate),
         ),
       };
     });
-  }, [updater]);
+  }, [activeDate, updater]);
 
   const toggleLitter = useCallback(() => {
     updater((prev) => {
       const catId = prev.settings.activeCatId ?? prev.cats[0]?.id;
       if (!catId) return prev;
-      const current = findLog(prev.logs, catId);
+      const current = findLog(prev.logs, catId, activeDate);
       return {
         ...prev,
-        logs: pruneLogs(
-          upsertLog(prev.logs, catId, { litterCleaned: !current?.litterCleaned }),
+        logs: preserveLogs(
+          upsertLog(prev.logs, catId, { litterCleaned: !current?.litterCleaned }, activeDate),
         ),
       };
     });
-  }, [updater]);
+  }, [activeDate, updater]);
 
   const addPlay = useCallback(
     (minutes: number) => {
       updater((prev) => {
         const catId = prev.settings.activeCatId ?? prev.cats[0]?.id;
         if (!catId) return prev;
-        const current = findLog(prev.logs, catId);
+        const current = findLog(prev.logs, catId, activeDate);
         return {
           ...prev,
-          logs: pruneLogs(
+          logs: preserveLogs(
             upsertLog(prev.logs, catId, {
               playMinutes: (current?.playMinutes ?? 0) + Math.max(0, minutes),
-            }),
+            }, activeDate),
           ),
         };
       });
     },
-    [updater],
+    [activeDate, updater],
   );
 
   /* ------------------------------ Hatırlatıcı ------------------------------ */
@@ -661,58 +680,52 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updater((prev) => {
         const reminder = prev.reminders.find((item) => item.id === id);
         if (!reminder) return prev;
-        const today = todayKey();
-        if (reminder.lastCompleted === today) return prev;
+        if (reminder.history.includes(activeDate) || reminder.lastCompleted === activeDate) return prev;
 
-        const yesterday = dateKey(addDays(new Date(), -1));
-        const streak =
-          reminder.lastCompleted === yesterday ? reminder.streak + 1 : 1;
-        const history = Array.from(new Set([...reminder.history, today])).slice(-180);
+        const yesterday = dateKey(addDays(parseDateKey(activeDate), -1));
+        const history = [...new Set([...reminder.history, activeDate])].sort();
+        const streak = activeDate === todayKey()
+          ? (reminder.lastCompleted === yesterday ? reminder.streak + 1 : 1)
+          : reminder.streak;
+        const lastCompleted = !reminder.lastCompleted || activeDate > reminder.lastCompleted
+          ? activeDate
+          : reminder.lastCompleted;
 
         let logs = prev.logs;
         const catId = reminder.catId ?? prev.settings.activeCatId;
         if (catId) {
           const target = prev.cats.find((cat) => cat.id === catId);
           if (target) {
-            const current = findLog(logs, catId) ?? emptyLog(today, catId);
+            const current = findLog(logs, catId, activeDate) ?? emptyLog(activeDate, catId);
             if (reminder.type === "food") {
               logs = upsertLog(logs, catId, {
-                mealsGiven: Math.min(
-                  prev.settings.mealsPerDay,
-                  current.mealsGiven + 1,
-                ),
-              });
+                mealsGiven: Math.min(prev.settings.mealsPerDay, current.mealsGiven + 1),
+              }, activeDate);
             } else if (reminder.type === "water") {
-              logs = upsertLog(logs, catId, { waterChanged: true });
+              logs = upsertLog(logs, catId, { waterChanged: true }, activeDate);
             } else if (reminder.type === "litter") {
-              logs = upsertLog(logs, catId, { litterCleaned: true });
+              logs = upsertLog(logs, catId, { litterCleaned: true }, activeDate);
             } else if (reminder.type === "play") {
               logs = upsertLog(logs, catId, {
                 playMinutes: current.playMinutes + 15,
-              });
+              }, activeDate);
             }
           }
         }
 
         return {
           ...prev,
-          logs: pruneLogs(logs),
+          logs: preserveLogs(logs),
           reminders: prev.reminders.map((item) =>
             item.id === id
-              ? {
-                  ...item,
-                  lastCompleted: today,
-                  streak,
-                  history,
-                  snoozedUntil: undefined,
-                }
+              ? { ...item, lastCompleted, streak, history, snoozedUntil: undefined }
               : item,
           ),
         };
       });
       notify("Tamamlandı olarak işaretlendi ✓");
     },
-    [notify, updater],
+    [activeDate, notify, updater],
   );
 
   const snoozeReminder = useCallback(
@@ -750,19 +763,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           kept.push(task);
           continue;
         }
-        // Tekrarlayan görevler için sonraki tekrarı oluştur
+        // Tamamlanan kaydı geçmiş için sakla; tekrarlayan görev için yeni bir örnek aç.
         if (task.repeat && task.repeat !== "none") {
           const days = task.repeat === "daily" ? 1 : 7;
           const nextDate = new Date(now + days * 24 * 60 * 60 * 1000).toISOString();
+          kept.push({ ...task, repeat: "none" });
           toAdd.push({
             ...task,
             id: uid("task"),
             progress: 0,
+            progressByDate: [],
             completedAt: undefined,
             createdAt: nextDate,
+            dueDate: dateKey(new Date(nextDate)),
           });
+        } else {
+          kept.push(task);
         }
-        // süresi dolan görev silinir
       }
       if (toAdd.length === 0 && kept.length === prev.tasks.length) return prev;
       return { ...prev, tasks: [...toAdd, ...kept] };
@@ -783,59 +800,78 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         kind: input.kind ?? "custom",
         target,
         progress: 0,
+        progressByDate: [{ date: activeDate, progress: 0 }],
         note: input.note?.trim().slice(0, 500) || undefined,
         repeat: input.repeat ?? "none",
         priority: input.priority ?? "medium",
         dueDate: input.dueDate,
-        createdAt: new Date().toISOString(),
+        createdAt: activeDate === todayKey()
+          ? new Date().toISOString()
+          : (() => {
+              const selectedDay = parseDateKey(activeDate);
+              selectedDay.setHours(12, 0, 0, 0);
+              return selectedDay.toISOString();
+            })(),
       };
       updater((prev) => ({ ...prev, tasks: [task, ...prev.tasks] }));
       notify("Görev eklendi.");
       return id;
     },
-    [notify, updater],
+    [activeDate, notify, updater],
   );
 
   const tapTask = useCallback(
     (id: string) => {
       updater((prev) => {
-        const task = prev.tasks.find((t) => t.id === id);
-        if (!task || task.completedAt) return prev;
-        const nextProgress = Math.min(task.target, task.progress + 1);
+        const task = prev.tasks.find((item) => item.id === id);
+        if (!task || taskCompletedOn(task, activeDate)) return prev;
+        const nextProgress = Math.min(task.target, taskProgressOn(task, activeDate) + 1);
         const completed = nextProgress >= task.target;
+        const completedAt = completed ? new Date().toISOString() : undefined;
+        const progressByDate = [
+          ...(task.progressByDate ?? []).filter((item) => item.date !== activeDate),
+          { date: activeDate, progress: nextProgress, completedAt },
+        ];
+        const isCurrentDay = activeDate === todayKey();
         return {
           ...prev,
-          tasks: prev.tasks.map((t) =>
-            t.id === id
-              ? {
-                  ...t,
-                  progress: nextProgress,
-                  completedAt: completed ? new Date().toISOString() : t.completedAt,
-                }
-              : t,
-          ),
+          tasks: prev.tasks.map((item) => item.id === id
+            ? {
+                ...item,
+                progressByDate,
+                ...(isCurrentDay ? { progress: nextProgress, completedAt } : {}),
+              }
+            : item),
         };
       });
     },
-    [updater],
+    [activeDate, updater],
   );
 
   const undoTask = useCallback(
     (id: string) => {
-      updater((prev) => ({
-        ...prev,
-        tasks: prev.tasks.map((task) =>
-          task.id === id
+      updater((prev) => {
+        const task = prev.tasks.find((item) => item.id === id);
+        if (!task) return prev;
+        const nextProgress = Math.max(0, taskProgressOn(task, activeDate) - 1);
+        const progressByDate = [
+          ...(task.progressByDate ?? []).filter((item) => item.date !== activeDate),
+          { date: activeDate, progress: nextProgress },
+        ];
+        const isCurrentDay = activeDate === todayKey();
+        return {
+          ...prev,
+          tasks: prev.tasks.map((item) => item.id === id
             ? {
-                ...task,
-                progress: Math.max(0, task.progress - 1),
-                completedAt: undefined,
+                ...item,
+                progressByDate,
+                ...(isCurrentDay ? { progress: nextProgress, completedAt: undefined } : {}),
               }
-            : task,
-        ),
-      }));
+            : item),
+        };
+      });
     },
-    [updater],
+    [activeDate, updater],
   );
 
   const updateTask = useCallback(
@@ -946,9 +982,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   }, [data]);
   const activeCatId = activeCat?.id ?? null;
+  const isHistoricalDate = activeDate !== todayKey();
   const todayLog = useMemo(
-    () => (activeCatId ? findLog(logs, activeCatId) : undefined),
-    [activeCatId, logs],
+    () => (activeCatId ? findLog(logs, activeCatId, activeDate) : undefined),
+    [activeCatId, activeDate, logs],
   );
   const lang = settings.language;
   const t = useCallback((key: string) => translate(lang, key), [lang]);
@@ -965,6 +1002,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     settings,
     activeCat,
     activeCatId,
+    activeDate,
+    isHistoricalDate,
+    setActiveDate,
+    returnToToday,
     todayLog,
     lang,
     error,

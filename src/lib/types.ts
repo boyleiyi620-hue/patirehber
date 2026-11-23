@@ -82,7 +82,7 @@ export type TaskKind =
 /**
  * Bakım görevi.
  * `target` 1 ise tek dokunuşta tamamlanır; >1 ise her dokunuşta `progress` artar.
- * Tamamlanan görevler `completedAt` üzerinden 24 saat sonra otomatik silinir.
+ * Tamamlanan görev kayıtları takvim geçmişi için korunur.
  */
 export interface Task {
   id: string;
@@ -92,12 +92,20 @@ export interface Task {
   kind: TaskKind;
   target: number; // 1-10
   progress: number; // 0..target
+  progressByDate?: TaskDayProgress[];
   note?: string;
   repeat?: "none" | "daily" | "weekly";
   priority?: "low" | "medium" | "high";
   dueDate?: string; // YYYY-MM-DD
   createdAt: string; // ISO
   completedAt?: string; // ISO — tamamlandığı an
+}
+
+/** Bir görevin seçilen günde kaydedilen ilerlemesi */
+export interface TaskDayProgress {
+  date: string; // YYYY-MM-DD
+  progress: number;
+  completedAt?: string; // gerçek tamamlanma anı
 }
 
 export type ReminderType =

@@ -38,6 +38,7 @@ import {
   REMINDER_META,
   breedName,
   computeStreak,
+  dateKey,
   dayScore,
   formatDateWithWeekday,
   formatOccurrence,
@@ -45,6 +46,9 @@ import {
   greetingForHour,
   nextReminderDate,
   scoreMessage,
+  taskCompletedOn,
+  taskProgressOn,
+  todayKey,
 } from "@/lib/utils";
 
 export function DashboardView() {
@@ -57,6 +61,7 @@ export function DashboardView() {
     reminders,
     settings,
     todayLog,
+    activeDate,
     addMeal,
     undoMeal,
     toggleWater,
@@ -80,7 +85,7 @@ export function DashboardView() {
 
   const score = dayScore(todayLog, mealsTarget);
   const streak = activeCat
-    ? computeStreak(logs, activeCat.id, mealsTarget)
+    ? computeStreak(logs, activeCat.id, mealsTarget, activeDate)
     : 0;
 
   const upcoming = useMemo(() => {
@@ -134,6 +139,23 @@ export function DashboardView() {
 
   const age = getCatAge(activeCat.birthDate);
   const mealsDone = meals >= mealsTarget;
+  const activeTasks = tasks.filter((task) => {
+    if (task.catId && task.catId !== activeCat.id) return false;
+    const createdDate = dateKey(new Date(task.createdAt));
+    const hasProgressOnDate = task.progressByDate?.some((entry) => entry.date === activeDate) ?? false;
+    if (activeDate === todayKey()) {
+      if (createdDate > activeDate) return false;
+      const completedDate = task.completedAt ? dateKey(new Date(task.completedAt)) : undefined;
+      if (completedDate && completedDate !== activeDate && !hasProgressOnDate && (!task.repeat || task.repeat === "none")) return false;
+      return true;
+    }
+    const relevantOnDate = task.dueDate === activeDate ||
+      createdDate === activeDate ||
+      hasProgressOnDate ||
+      (task.completedAt ? dateKey(new Date(task.completedAt)) === activeDate : false) ||
+      (task.repeat !== "none" && task.repeat !== undefined && createdDate <= activeDate);
+    return relevantOnDate && !taskCompletedOn(task, activeDate);
+  });
 
   return (
     <div className="space-y-5">
@@ -142,7 +164,7 @@ export function DashboardView() {
       {/* Karşılama */}
       <section className="animate-fade-in-up" aria-labelledby="greeting-heading">
         <p className="text-xs font-semibold uppercase tracking-wider text-primary-strong">
-          {now ? formatDateWithWeekday(now) : "Bugün"}
+          {formatDateWithWeekday(activeDate)}
         </p>
         <div className="mt-1 flex items-end justify-between gap-3">
           <h1
@@ -160,7 +182,7 @@ export function DashboardView() {
           ) : null}
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Bugünkü bakım puanın {score}/100 · {scoreMessage(score)}
+          {activeDate === todayKey() ? "Bugünkü" : "Seçilen günün"} bakım puanı {score}/100 · {scoreMessage(score)}
         </p>
       </section>
 
@@ -205,7 +227,7 @@ export function DashboardView() {
 
           <div className="relative mt-4">
             <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-white/90">
-              <span>Bugünkü bakım</span>
+              <span>{activeDate === todayKey() ? "Bugünkü bakım" : "Seçilen günün bakımı"}</span>
               <span>{score}%</span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-white/25">
@@ -247,7 +269,7 @@ export function DashboardView() {
         <Card className="animate-fade-in-up">
           <CardHeader className="flex-row items-center justify-between gap-3 pb-2">
             <div>
-              <CardTitle>{t("dashboard.tasks")}</CardTitle>
+              <CardTitle>{activeDate === todayKey() ? t("dashboard.tasks") : "Seçilen günün görevleri"}</CardTitle>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {mealsDone && water && litter && play >= 15
                   ? "Tüm görevler tamam, harika! 🎉"
@@ -296,7 +318,7 @@ export function DashboardView() {
               value={`${play} dk`}
             />
             <div className="pt-2">
-              <Progress value={score} label="Günlük bakım puanı" />
+              <Progress value={score} label={activeDate === todayKey() ? "Günlük bakım puanı" : "Seçilen günün bakım puanı"} />
               <p className="mt-1.5 text-[11px] text-muted-foreground">
                 Puan; mama, su, kum ve oyun kayıtlarından hesaplanır.
               </p>
@@ -309,7 +331,7 @@ export function DashboardView() {
           <CardHeader className="pb-3">
             <CardTitle>{t("dashboard.quick")}</CardTitle>
             <p className="text-xs text-muted-foreground">
-              {activeCat.name} için anında kayıt oluştur.
+              {activeCat.name} için {activeDate === todayKey() ? "bugüne" : "seçilen güne"} kayıt oluştur.
             </p>
           </CardHeader>
           <CardContent>
@@ -361,7 +383,7 @@ export function DashboardView() {
           <div>
             <CardTitle>Görevlerim</CardTitle>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {tasks.filter((t) => !t.completedAt).length} aktif görev
+                  {activeTasks.length} aktif görev
             </p>
           </div>
           <Link
@@ -372,16 +394,15 @@ export function DashboardView() {
           </Link>
         </CardHeader>
         <CardContent className="space-y-2 pt-1">
-          {tasks.length === 0 ? (
+          {activeTasks.length === 0 ? (
             <div className="rounded-xl bg-muted/50 px-3 py-4 text-center">
-              <p className="text-xs text-muted-foreground">Henüz görev yok.</p>
+              <p className="text-xs text-muted-foreground">{tasks.length === 0 ? "Henüz görev yok." : "Seçilen gün için görev yok."}</p>
               <ButtonLink href="/tasks" variant="ghost" size="sm" className="mt-1">
                 Görev ekle
               </ButtonLink>
             </div>
           ) : (
-            tasks
-              .filter((t) => !t.completedAt)
+            activeTasks
               .slice(0, 4)
               .map((task) => (
                 <button
@@ -397,7 +418,7 @@ export function DashboardView() {
                     <p className="truncate text-xs font-bold">{task.title}</p>
                     {task.target > 1 ? (
                       <p className="text-[10px] text-muted-foreground">
-                        {task.progress}/{task.target}
+                        {taskProgressOn(task, activeDate)}/{task.target}
                       </p>
                     ) : null}
                   </div>
@@ -407,7 +428,7 @@ export function DashboardView() {
                         <span
                           key={i}
                           className={`h-1.5 w-3 rounded-full ${
-                            i < task.progress ? "bg-primary" : "bg-muted"
+                            i < taskProgressOn(task, activeDate) ? "bg-primary" : "bg-muted"
                           }`}
                         />
                       ))}
@@ -451,6 +472,7 @@ export function DashboardView() {
           logs={logs}
           catId={activeCat.id}
           mealsTarget={mealsTarget}
+          throughDate={activeDate}
         />
       </div>
 
@@ -467,7 +489,16 @@ export function DashboardView() {
             </Link>
           </CardHeader>
           <CardContent className="space-y-2 pt-1">
-            {upcoming.length === 0 ? (
+            {activeDate !== todayKey() ? (
+              <div className="rounded-xl bg-muted/50 px-3 py-4 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Yaklaşan bildirimler gerçek bugünün saatine göre çalışır. Seçilen günün hatırlatıcılarını görmek ve kaydetmek için Hatırlatıcılar bölümünü aç.
+                </p>
+                <ButtonLink href="/reminders" variant="ghost" size="sm" className="mt-1">
+                  Seçilen günün hatırlatıcıları
+                </ButtonLink>
+              </div>
+            ) : upcoming.length === 0 ? (
               <div className="rounded-xl bg-muted/50 px-3 py-4 text-center">
                 <p className="text-xs text-muted-foreground">
                   Yaklaşan hatırlatıcı yok.

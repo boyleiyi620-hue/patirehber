@@ -29,8 +29,13 @@ export function Dialog({
   className,
 }: DialogProps) {
   const panelRef = React.useRef<HTMLDivElement>(null);
+  const onOpenChangeRef = React.useRef(onOpenChange);
   const titleId = React.useId();
   const descriptionId = React.useId();
+
+  React.useEffect(() => {
+    onOpenChangeRef.current = onOpenChange;
+  }, [onOpenChange]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -43,7 +48,7 @@ export function Dialog({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onOpenChange(false);
+        onOpenChangeRef.current(false);
         return;
       }
       if (event.key !== "Tab" || !panelRef.current) return;
@@ -71,7 +76,7 @@ export function Dialog({
       document.body.style.overflow = overflow;
       previouslyFocused?.focus?.();
     };
-  }, [open, onOpenChange]);
+  }, [open]);
 
   if (!open || typeof document === "undefined") return null;
 
@@ -79,7 +84,7 @@ export function Dialog({
     <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
       <div
         className="absolute inset-0 animate-fade-in bg-black/45 backdrop-blur-[2px]"
-        onClick={() => onOpenChange(false)}
+        onClick={() => onOpenChangeRef.current(false)}
         aria-hidden="true"
       />
       <div
@@ -111,7 +116,7 @@ export function Dialog({
           </div>
           <button
             type="button"
-            onClick={() => onOpenChange(false)}
+            onClick={() => onOpenChangeRef.current(false)}
             aria-label="Pencereyi kapat"
             className="rounded-full p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
           >
