@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, guideChecklistItemId } from "@/lib/utils";
 
 /**
  * Native <details> tabanlı akordeon.
@@ -78,8 +78,13 @@ export function AccordionItem({
 /** Rehber içerik bloklarını (paragraf, liste, ipucu, uyarı, tablo) render eder */
 export function GuideBlocks({
   blocks,
+  checklist,
 }: {
   blocks: import("@/lib/types").GuideBlock[];
+  checklist?: {
+    checkedItemIds: ReadonlySet<string>;
+    onToggleItem: (itemId: string) => void;
+  };
 }) {
   return (
     <div className="space-y-3">
@@ -94,15 +99,32 @@ export function GuideBlocks({
         if (block.type === "list") {
           return (
             <ul key={index} className="space-y-1.5">
-              {block.items.map((item, itemIndex) => (
-                <li key={itemIndex} className="flex gap-2 text-sm leading-relaxed">
-                  <span
-                    aria-hidden="true"
-                    className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-                  />
-                  <span>{item}</span>
-                </li>
-              ))}
+              {block.items.map((item, itemIndex) => {
+                const itemId = guideChecklistItemId(item, itemIndex, index);
+                return (
+                  <li key={itemIndex} className="text-sm leading-relaxed">
+                    {checklist ? (
+                      <label className="flex cursor-pointer items-start gap-2 rounded-lg p-1 -m-1">
+                        <input
+                          type="checkbox"
+                          className="mt-0.5 h-4 w-4 shrink-0 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          checked={checklist.checkedItemIds.has(itemId)}
+                          onChange={() => checklist.onToggleItem(itemId)}
+                        />
+                        <span>{item}</span>
+                      </label>
+                    ) : (
+                      <span className="flex gap-2">
+                        <span
+                          aria-hidden="true"
+                          className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                        />
+                        <span>{item}</span>
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           );
         }

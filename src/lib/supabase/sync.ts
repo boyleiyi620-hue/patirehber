@@ -1,5 +1,5 @@
 import { createClient } from "./client";
-import type { AppData, Cat, DailyLog, HealthEntry, Reminder, Task } from "@/lib/types";
+import type { AppData, Cat, DailyLog, GuideChecklistEntry, HealthEntry, Reminder, Task } from "@/lib/types";
 import { idsToDelete } from "./reconcile";
 
 type SyncTable =
@@ -9,7 +9,8 @@ type SyncTable =
   | "tasks"
   | "health_entries"
   | "vaccinations"
-  | "weight_entries";
+  | "weight_entries"
+  | "guide_checklist_entries";
 
 type Row = Record<string, unknown>;
 
@@ -27,7 +28,7 @@ function batches<T>(items: T[], size = 100): T[][] {
 
 export async function loadUserData(userId: string): Promise<AppData | null> {
   const supabase = createClient();
-  const [profile, cats, reminders, logs, tasks, health, vaccs, weights] = await Promise.all([
+  const [profile, cats, reminders, logs, tasks, health, vaccs, weights, guideChecks] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
     supabase.from("cats").select("*").eq("user_id", userId),
     supabase.from("reminders").select("*").eq("user_id", userId),
@@ -36,6 +37,7 @@ export async function loadUserData(userId: string): Promise<AppData | null> {
     supabase.from("health_entries").select("*").eq("user_id", userId),
     supabase.from("vaccinations").select("*").eq("user_id", userId),
     supabase.from("weight_entries").select("*").eq("user_id", userId),
+    supabase.from("guide_checklist_entries").select("*").eq("user_id", userId),
   ]);
 
   const resultErrors = [
@@ -47,6 +49,7 @@ export async function loadUserData(userId: string): Promise<AppData | null> {
     ["Sağlık kayıtları", health.error],
     ["Aşı kayıtları", vaccs.error],
     ["Kilo kayıtları", weights.error],
+    ["Rehber tikleri", guideChecks.error],
   ] as const;
   for (const [label, error] of resultErrors) throwOnError(error, `${label} yüklenemedi`);
 
@@ -137,6 +140,14 @@ export async function loadUserData(userId: string): Promise<AppData | null> {
     createdAt: h.created_at,
   }));
 
+  const mappedGuideChecklist: GuideChecklistEntry[] = (guideChecks.data ?? []).map((entry: any) => ({
+    id: entry.id,
+    catId: entry.cat_id,
+    date: entry.date,
+    sectionId: entry.section_id,
+    itemId: entry.item_id,
+  }));
+
   const settings = {
     theme: (profileData?.theme as any) ?? "system",
     language: (profileData?.language as any) ?? "tr",
@@ -158,6 +169,7 @@ export async function loadUserData(userId: string): Promise<AppData | null> {
     logs: mappedLogs,
     tasks: mappedTasks,
     healthEntries: mappedHealth,
+    guideChecklistEntries: mappedGuideChecklist,
     meta: { createdAt: new Date().toISOString(), lastOpenedAt: new Date().toISOString() },
   };
 }
@@ -295,6 +307,14 @@ export async function saveUserData(userId: string, data: AppData): Promise<void>
     note: h.note ?? null,
     created_at: h.createdAt,
   }));
+  const guideChecklistRows: Row[] = data.guideChecklistEntries.map((entry) => ({
+    id: entry.id,
+    user_id: userId,
+    cat_id: entry.catId,
+    date: entry.date,
+    section_id: entry.sectionId,
+    item_id: entry.itemId,
+  }));
   const vaccinationRows: Row[] = data.cats.flatMap((cat) =>
     cat.vaccinations.map((v) => ({
       id: v.id,
@@ -322,6 +342,7 @@ export async function saveUserData(userId: string, data: AppData): Promise<void>
     upsertRows(supabase, "daily_logs", logRows, "user_id,cat_id,date"),
     upsertRows(supabase, "tasks", taskRows),
     upsertRows(supabase, "health_entries", healthRows),
+    upsertRows(supabase, "guide_checklist_entries", guideChecklistRows, "user_id,cat_id,date,section_id,item_id"),
     upsertRows(supabase, "vaccinations", vaccinationRows),
     upsertRows(supabase, "weight_entries", weightRows),
   ]);
@@ -337,6 +358,7 @@ export async function saveUserData(userId: string, data: AppData): Promise<void>
     daily_logs: logRows.map((row) => String(row.id)),
     tasks: taskRows.map((row) => String(row.id)),
     health_entries: healthRows.map((row) => String(row.id)),
+    guide_checklist_entries: guideChecklistRows.map((row) => String(row.id)),
     vaccinations: vaccinationRows.map((row) => String(row.id)),
     weight_entries: weightRows.map((row) => String(row.id)),
     cats: catRows.map((row) => String(row.id)),
@@ -344,7 +366,7 @@ export async function saveUserData(userId: string, data: AppData): Promise<void>
 
   // Remove children first, then cats. Empty lists intentionally clear that
   // table for this owner; the UI reaches this code only after explicit reset.
-  for (const table of ["reminders", "daily_logs", "tasks", "health_entries", "vaccinations", "weight_entries", "cats"] as const) {
+  for (const table of ["reminders", "daily_logs", "tasks", "health_entries", "guide_checklist_entries", "vaccinations", "weight_entries", "cats"] as const) {
     await removeStaleRows(supabase, table, userId, currentIds[table]);
   }
 }

@@ -205,6 +205,7 @@ export function createInitialData(): AppData {
     logs: buildDemoLogs(cat.id),
     tasks: [],
     healthEntries: [],
+    guideChecklistEntries: [],
     meta: {
       createdAt: new Date().toISOString(),
       lastOpenedAt: new Date().toISOString(),

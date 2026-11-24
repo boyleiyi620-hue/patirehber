@@ -21,6 +21,30 @@ export function uid(prefix = "id"): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** Kedi, gün, bölüm ve öğeye göre deterministik checklist kayıt anahtarı */
+export function guideChecklistEntryId(
+  catId: string,
+  date: string,
+  sectionId: string,
+  itemId: string,
+): string {
+  return [catId, date, sectionId, itemId].map(encodeURIComponent).join("|");
+}
+
+/** Liste öğesinden kısa ve cihazlar arasında tutarlı kimlik üretir */
+export function guideChecklistItemId(
+  item: string,
+  itemIndex: number,
+  blockIndex = 0,
+): string {
+  let hash = 2166136261;
+  for (const character of item) {
+    hash ^= character.codePointAt(0) ?? 0;
+    hash = Math.imul(hash, 16777619);
+  }
+  return `block-${blockIndex}-item-${itemIndex}-${(hash >>> 0).toString(36)}`;
+}
+
 /* -------------------------------------------------------------------------- */
 /*                                    TARİH                                   */
 /* -------------------------------------------------------------------------- */

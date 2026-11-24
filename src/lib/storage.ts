@@ -6,11 +6,12 @@ import type {
   ReminderType,
   Settings,
   HealthEntry,
+  GuideChecklistEntry,
   Task,
   TaskKind,
 } from "./types";
 import { defaultSettings } from "./demo-data";
-import { dateKey, todayKey, uid } from "./utils";
+import { dateKey, guideChecklistEntryId, parseDateKey, todayKey, uid } from "./utils";
 
 export const STORAGE_KEY = "patirehber:data:v1";
 export const DATA_VERSION = 2;
@@ -304,6 +305,37 @@ export function normalizeData(raw: unknown): AppData | null {
         .filter((h): h is HealthEntry => h !== null)
     : [];
 
+  const guideChecklistEntries = Array.isArray(raw.guideChecklistEntries)
+    ? Array.from(
+        new Map(
+          raw.guideChecklistEntries
+            .filter(isRecord)
+            .map((entry) => {
+              const catId = asString(entry.catId);
+              const date = asString(entry.date);
+              const sectionId = asString(entry.sectionId).trim().slice(0, 160);
+              const itemId = asString(entry.itemId).trim().slice(0, 240);
+              if (
+                !catIds.includes(catId) ||
+                !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+                dateKey(parseDateKey(date)) !== date ||
+                !sectionId ||
+                !itemId
+              ) return null;
+              const normalized: GuideChecklistEntry = {
+                id: guideChecklistEntryId(catId, date, sectionId, itemId),
+                catId,
+                date,
+                sectionId,
+                itemId,
+              };
+              return [normalized.id, normalized] as const;
+            })
+            .filter((entry): entry is readonly [string, GuideChecklistEntry] => entry !== null),
+        ).values(),
+      )
+    : [];
+
   const activeCatId = asString(settingsRaw.activeCatId);
   const settings: Settings = {
     theme:
@@ -347,6 +379,7 @@ export function normalizeData(raw: unknown): AppData | null {
     logs,
     tasks,
     healthEntries,
+    guideChecklistEntries,
     meta: {
       createdAt: asString(metaRaw.createdAt, new Date().toISOString()),
       lastOpenedAt: new Date().toISOString(),

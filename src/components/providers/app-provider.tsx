@@ -13,6 +13,7 @@ import type {
   AppData,
   Cat,
   DailyLog,
+  GuideChecklistEntry,
   HealthEntry,
   Language,
   Reminder,
@@ -34,6 +35,7 @@ import {
   dateKey,
   emptyLog,
   findLog,
+  guideChecklistEntryId,
   parseDateKey,
   taskCompletedOn,
   taskProgressOn,
@@ -78,6 +80,7 @@ interface AppContextValue {
   logs: DailyLog[];
   tasks: Task[];
   healthEntries: HealthEntry[];
+  guideChecklistEntries: GuideChecklistEntry[];
   settings: Settings;
   activeCat: Cat | null;
   activeCatId: string | null;
@@ -102,6 +105,7 @@ interface AppContextValue {
 
   // Ayarlar & kedi
   updateSettings: (patch: Partial<Settings>) => void;
+  toggleGuideChecklistItem: (catId: string, sectionId: string, itemId: string) => void;
   setActiveCat: (catId: string) => void;
   addCat: (cat: Cat) => void;
   updateCat: (catId: string, patch: Partial<Cat>) => void;
@@ -212,6 +216,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             logs: [],
             tasks: [],
             healthEntries: [],
+            guideChecklistEntries: [],
             meta: { createdAt: new Date().toISOString(), lastOpenedAt: new Date().toISOString() },
           });
         }
@@ -343,6 +348,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [updater],
   );
 
+  const toggleGuideChecklistItem = useCallback(
+    (catId: string, sectionId: string, itemId: string) => {
+      if (!catId || !sectionId || !itemId) return;
+      const id = guideChecklistEntryId(catId, activeDate, sectionId, itemId);
+      updater((prev) => {
+        if (!prev.cats.some((cat) => cat.id === catId)) return prev;
+        const alreadyChecked = prev.guideChecklistEntries.some((entry) => entry.id === id);
+        return {
+          ...prev,
+          guideChecklistEntries: alreadyChecked
+            ? prev.guideChecklistEntries.filter((entry) => entry.id !== id)
+            : [...prev.guideChecklistEntries, { id, catId, date: activeDate, sectionId, itemId }],
+        };
+      });
+    },
+    [activeDate, updater],
+  );
+
   const setActiveCat = useCallback(
     (catId: string) => {
       updater((prev) =>
@@ -396,6 +419,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           logs: prev.logs.filter((log) => log.catId !== catId),
           tasks: prev.tasks.filter((task) => task.catId !== catId),
           healthEntries: prev.healthEntries.filter((entry) => entry.catId !== catId),
+          guideChecklistEntries: prev.guideChecklistEntries.filter((entry) => entry.catId !== catId),
           settings: {
             ...prev.settings,
             activeCatId:
@@ -953,6 +977,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         logs: [],
         tasks: [],
         healthEntries: [],
+        guideChecklistEntries: [],
         meta: {
           createdAt: new Date().toISOString(),
           lastOpenedAt: new Date().toISOString(),
@@ -974,6 +999,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const logs = useMemo(() => data?.logs ?? [], [data]);
   const tasks = useMemo(() => data?.tasks ?? [], [data]);
   const healthEntries = useMemo(() => data?.healthEntries ?? [], [data]);
+  const guideChecklistEntries = useMemo(
+    () => data?.guideChecklistEntries ?? [],
+    [data],
+  );
   const activeCat = useMemo(() => {
     if (!data || data.cats.length === 0) return null;
     return (
@@ -999,6 +1028,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     logs,
     tasks,
     healthEntries,
+    guideChecklistEntries,
     settings,
     activeCat,
     activeCatId,
@@ -1019,6 +1049,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     retry,
     retrySync,
     updateSettings,
+    toggleGuideChecklistItem,
     setActiveCat,
     addCat,
     updateCat,

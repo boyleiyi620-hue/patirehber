@@ -5,11 +5,12 @@ import {
   AlertTriangle,
   Bookmark,
   BookOpen,
+  Heart,
   Search,
   X,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,48 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { BreedExplorer } from "@/components/guide/breed-explorer";
 import { Calculators, CalculatorTeaser } from "@/components/guide/calculators";
 import { guideCategories, getGuideCategory } from "@/lib/guide-data";
+import { formatDateWithWeekday, getBreed, guideChecklistItemId } from "@/lib/utils";
 import { useApp } from "@/components/providers/app-provider";
+
+type CatGuideTab = "likes" | "dislikes" | "care" | "health";
+
+const CAT_GUIDE_TABS: { id: CatGuideTab; label: string }[] = [
+  { id: "likes", label: "Sevdikleri" },
+  { id: "dislikes", label: "Sevmedikleri" },
+  { id: "care", label: "Bakım" },
+  { id: "health", label: "Sağlık" },
+];
+
+function GuideChecklistList({
+  items,
+  checkedItemIds,
+  onToggleItem,
+}: {
+  items: string[];
+  checkedItemIds: ReadonlySet<string>;
+  onToggleItem: (itemId: string) => void;
+}) {
+  return (
+    <ul className="space-y-1.5">
+      {items.map((item, index) => {
+        const itemId = guideChecklistItemId(item, index);
+        return (
+          <li key={itemId} className="text-sm">
+            <label className="flex cursor-pointer items-start gap-2 rounded-lg p-1 -m-1">
+              <input
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 shrink-0 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                checked={checkedItemIds.has(itemId)}
+                onChange={() => onToggleItem(itemId)}
+              />
+              <span>{item}</span>
+            </label>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 const CHIPS = [
   ...guideCategories.map((category) => ({
@@ -31,7 +73,15 @@ const CHIPS = [
 ];
 
 export function GuideView() {
-  const { t, settings, updateSettings } = useApp();
+  const {
+    t,
+    settings,
+    updateSettings,
+    cats,
+    activeDate,
+    guideChecklistEntries,
+    toggleGuideChecklistItem,
+  } = useApp();
 
   const toggleFavorite = (sectionId: string) => {
     const current = settings.guideFavorites ?? [];
@@ -42,10 +92,15 @@ export function GuideView() {
   };
   const [active, setActive] = useState("nutrition");
   const [query, setQuery] = useState("");
+  const [catId, setCatId] = useState<string | null>(null);
+  const [catTab, setCatTab] = useState<CatGuideTab>("likes");
 
   useEffect(() => {
-    const param = new URLSearchParams(window.location.search).get("kategori");
-    if (param && CHIPS.some((chip) => chip.id === param)) setActive(param);
+    const params = new URLSearchParams(window.location.search);
+    const cat = params.get("cat");
+    const kategori = params.get("kategori");
+    if (cat) setCatId(cat);
+    else if (kategori && CHIPS.some((chip) => chip.id === kategori)) setActive(kategori);
   }, []);
 
   const category = getGuideCategory(active);
@@ -76,6 +131,247 @@ export function GuideView() {
   }, [query]);
 
   const searching = query.trim().length >= 2;
+
+  // Kediye özel rehber modu: mevcut cat-profile bağlantısı /guide?cat=... ile gelir.
+  if (catId) {
+    const cat = cats.find((item) => item.id === catId);
+    if (!cat) {
+      return (
+        <div>
+          <PageHeader emoji="🐾" title="Kediye özel rehber" subtitle="Kedi bulunamadı." />
+          <ButtonLink href="/guide" variant="outline" size="sm">
+            Rehbere dön
+          </ButtonLink>
+        </div>
+      );
+    }
+
+    const breed = getBreed(cat.breedId);
+    const age = Math.floor(
+      (Date.now() - new Date(cat.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000),
+    );
+    const likes =
+      breed && (breed.activity === "Yüksek" || breed.activity === "Çok yüksek")
+        ? ["İnteraktif oyun (tüy çubuğu, lazer)", "Tırmanma ve zıplama", "Pencere izleme", "Bulmaca mama kapları", "Kovalamaca oyunları"]
+        : breed && (breed.activity === "Düşük" || breed.activity === "Düşük-Orta")
+          ? ["Sakin ortam", "Yumuşak yatak", "Kucağa oturma", "Nazik tımar", "Güneşli pencere"]
+          : ["Düzenli oyun", "Tırmalama direği", "Kucak ve sevme", "Güneşli pencere", "Kokulu oyuncaklar"];
+    const dislikes =
+      breed && breed.coat.toLowerCase().includes("uzun")
+        ? ["Sık tarama (başlangıçta)", "Gürültülü ortam", "Ani değişimler", "Yalnızlık", "Kirli kum kabı"]
+        : ["Banyo", "Kucağa zorlama", "Gürültü", "Yabancılar (ilk temasta)", "Ani sesler"];
+    const relevant = guideCategories.filter((category) =>
+      ["nutrition", "health", "dos", "donts"].includes(category.id),
+    );
+    const checkedIdsForSection = (sectionId: string) =>
+      new Set(
+        guideChecklistEntries
+          .filter(
+            (entry) =>
+              entry.catId === cat.id &&
+              entry.date === activeDate &&
+              entry.sectionId === sectionId,
+          )
+          .map((entry) => entry.itemId),
+      );
+
+    return (
+      <div className="space-y-4">
+        <PageHeader
+          emoji="🐾"
+          title={`${cat.name} için özel rehber`}
+          subtitle={`${breed?.name ?? "Bilinmeyen ırk"} · ${cat.weight} kg · ${age} yaş`}
+          action={
+            <ButtonLink href="/guide" variant="outline" size="sm">
+              Tüm rehber
+            </ButtonLink>
+          }
+        />
+
+        <Card className="overflow-hidden">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-2xl">
+                🐱
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-display text-base font-extrabold">{cat.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {breed?.name ?? "Irk seçilmemiş"} · {breed?.origin ?? ""} · {breed?.activity ?? "Orta"} aktivite
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <Badge variant="secondary">{breed?.coat ?? "Tüy bilgisi yok"}</Badge>
+                  <Badge variant="secondary">{breed?.grooming ?? "Tarama: haftalık"}</Badge>
+                  <Badge variant="secondary">{breed?.lifespan ?? "Yaşam süresi"}</Badge>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <p className="text-[11px] text-muted-foreground">
+          Tikler {formatDateWithWeekday(activeDate)} için {cat.name} profiline kaydedilir.
+        </p>
+
+        <div className="flex gap-2" role="tablist" aria-label="Kediye özel rehber sekmeleri">
+          {CAT_GUIDE_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={catTab === tab.id}
+              onClick={() => setCatTab(tab.id)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                catTab === tab.id
+                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                  : "border-border bg-card text-muted-foreground hover:border-primary/40"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {catTab === "likes" ? (
+          <Card className="border-accent/30 bg-accent/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-1.5">
+                <Heart className="h-4 w-4 text-accent" aria-hidden="true" />
+                {cat.name} bunları sever
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <GuideChecklistList
+                items={likes}
+                checkedItemIds={checkedIdsForSection("cat-guide:likes")}
+                onToggleItem={(itemId) => toggleGuideChecklistItem(cat.id, "cat-guide:likes", itemId)}
+              />
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                Beğendiği aktiviteleri günlük rutine ekleyin; oyun ve zenginleştirme stresi azaltır, obeziteyi önler.
+              </p>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {catTab === "dislikes" ? (
+          <Card className="border-destructive/25 bg-destructive/10">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-1.5 text-danger">
+                <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+                {cat.name} bunlardan hoşlanmaz
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <GuideChecklistList
+                items={dislikes}
+                checkedItemIds={checkedIdsForSection("cat-guide:dislikes")}
+                onToggleItem={(itemId) => toggleGuideChecklistItem(cat.id, "cat-guide:dislikes", itemId)}
+              />
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                Bu durumlardan kaçının veya kademeli alıştırma yapın; stres ve tırmalama gibi davranış sorunlarını azaltır.
+              </p>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {catTab === "care" ? (
+          <div className="space-y-3">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Bakım notları</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <GuideChecklistList
+                  items={breed?.careNotes ?? ["Düzenli tarama, tırnak bakımı ve diş temizliği yapın."]}
+                  checkedItemIds={checkedIdsForSection("cat-guide:care-notes")}
+                  onToggleItem={(itemId) => toggleGuideChecklistItem(cat.id, "cat-guide:care-notes", itemId)}
+                />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Tüy ve hijyen</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p><span className="font-semibold">Tüy:</span> {breed?.coat ?? "Kısa tüylü"}</p>
+                <p><span className="font-semibold">Tarama:</span> {breed?.grooming ?? "Haftada 1-2 kez"}</p>
+                <p className="text-muted-foreground">
+                  Kum kabını günde 2 kez temizleyin; su kabını her gün tazeleyin; tırnakları 2-3 haftada bir kesin.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        ) : null}
+
+        {catTab === "health" ? (
+          <div className="space-y-3">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Sağlık riskleri</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-1.5">
+                  {(breed?.healthRisks ?? ["Düzenli veteriner kontrolü"]).map((risk) => (
+                    <Badge key={risk} variant="destructive">{risk}</Badge>
+                  ))}
+                </div>
+                <p className="mt-3 text-[11px] text-muted-foreground">
+                  Bu riskler genel bilgilendirmedir; veterinerinizle düzenli kontrol planı oluşturun.
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Uyumluluk ve ortam</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p>Aktivite seviyesi: <span className="font-semibold">{breed?.activity ?? "Orta"}</span></p>
+                <p className="text-muted-foreground">
+                  {breed?.activity === "Yüksek" || breed?.activity === "Çok yüksek"
+                    ? "Geniş ve zenginleştirilmiş ortam gerekir; apartman dairesinde sıkılabilir."
+                    : "Apartman yaşamına uyumludur; pencere ve tırmanma alanı yeterlidir."}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        ) : null}
+
+        <div className="space-y-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            İlgili rehber bölümleri
+          </p>
+          {relevant.map((category) => (
+            <div key={category.id} className="space-y-2">
+              <p className="text-sm font-bold">{category.emoji} {category.title}</p>
+              <Accordion>
+                {category.sections.slice(0, 3).map((section) => (
+                  <AccordionItem
+                    key={section.id}
+                    title={section.title}
+                    subtitle={section.summary}
+                    defaultOpen={false}
+                    tone={category.id === "donts" ? "danger" : category.id === "dos" ? "success" : "default"}
+                  >
+                    <GuideBlocks
+                      blocks={section.blocks}
+                      checklist={{
+                        checkedItemIds: checkedIdsForSection(section.id),
+                        onToggleItem: (itemId) => toggleGuideChecklistItem(cat.id, section.id, itemId),
+                      }}
+                    />
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-center text-[10px] leading-relaxed text-muted-foreground">
+          PatiRehber içerikleri genel bilgilendirme amaçlıdır ve veteriner hekim tavsiyesi yerine geçmez.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>

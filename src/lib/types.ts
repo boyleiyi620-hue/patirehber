@@ -42,6 +42,15 @@ export interface HealthEntry {
   createdAt: string; // ISO
 }
 
+/** Rehberde bir kedi ve seçili gün için tamamlanan liste öğesi */
+export interface GuideChecklistEntry {
+  id: string;
+  catId: string;
+  date: string; // YYYY-MM-DD
+  sectionId: string;
+  itemId: string;
+}
+
 /** Kedi profili */
 export interface Cat {
   id: string;
@@ -180,6 +189,7 @@ export interface AppData {
   logs: DailyLog[];
   tasks: Task[];
   healthEntries: HealthEntry[];
+  guideChecklistEntries: GuideChecklistEntry[];
   meta: {
     createdAt: string;
     lastOpenedAt: string;
