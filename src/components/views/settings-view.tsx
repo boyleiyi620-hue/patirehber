@@ -36,9 +36,10 @@ import { Label, FieldHint } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
+  disablePushNotifications,
+  enablePushNotifications,
   getNotificationPermission,
   permissionLabel,
-  requestNotificationPermission,
 } from "@/lib/notifications";
 import { parseImportedData, STORAGE_KEY } from "@/lib/storage";
 import { contentLanguageNotes } from "@/lib/i18n";
@@ -75,6 +76,8 @@ export function SettingsView() {
   const [resetMode, setResetMode] = useState<"empty">("empty");
   const [importError, setImportError] = useState<string | null>(null);
   const [permission, setPermission] = useState(getNotificationPermission());
+  const [permissionBusy, setPermissionBusy] = useState(false);
+  const [pushStatus, setPushStatus] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const saveName = () => {
@@ -89,14 +92,40 @@ export function SettingsView() {
     window.setTimeout(() => setNameSaved(false), 2000);
   };
 
-  const askPermission = async () => {
-    const result = await requestNotificationPermission();
-    setPermission(result);
-    if (result === "granted") {
-      updateSettings({ notifications: { ...settings.notifications, enabled: true } });
-      notify("Bildirim izni verildi 🔔");
-    } else if (result === "denied") {
-      notify("Bildirim izni reddedildi.");
+  const toggleNotifications = async (checked: boolean) => {
+    setPermissionBusy(true);
+    setPushStatus(null);
+    try {
+      if (checked) {
+        const result = await enablePushNotifications();
+        setPermission(result.permission);
+        if (!result.ok) {
+          setPushStatus(result.detail);
+          notify(result.detail);
+          return;
+        }
+        updateSettings({ notifications: { ...settings.notifications, enabled: true } });
+        const message = result.detail ?? (result.background
+          ? "Bu cihaz arka plan push bildirimlerine abone oldu."
+          : "İzin verildi; bildirimler uygulama açıkken gösterilecek.");
+        setPushStatus(message);
+        notify(message);
+        return;
+      }
+
+      await disablePushNotifications();
+      updateSettings({ notifications: { ...settings.notifications, enabled: false } });
+      setPushStatus("Bildirimler bu hesapta kapatıldı ve bu cihazın push aboneliği kaldırıldı.");
+      notify("Bildirimler kapatıldı.");
+    } catch {
+      const message = checked
+        ? "Bildirim aboneliği kurulamadı. Bağlantını kontrol edip tekrar dene."
+        : "Bu cihazın push aboneliği kaldırılamadı; tercih değiştirilmedi.";
+      setPushStatus(message);
+      notify(message);
+    } finally {
+      setPermission(getNotificationPermission());
+      setPermissionBusy(false);
     }
   };
 
@@ -300,32 +329,31 @@ export function SettingsView() {
               <div>
                 <p className="text-sm font-semibold">Bildirimler</p>
                 <p className="text-[11px] text-muted-foreground">
-                  {permissionLabel(permission)}
+                  {permissionLabel(permission)} · {settings.notifications.enabled ? "Açık" : "Kapalı"}
                 </p>
               </div>
               <Switch
                 checked={settings.notifications.enabled}
-                onCheckedChange={(checked) =>
-                  updateSettings({
-                    notifications: { ...settings.notifications, enabled: checked },
-                  })
-                }
+                onCheckedChange={(checked) => void toggleNotifications(checked)}
+                disabled={permissionBusy}
                 label="Bildirimler açık"
               />
             </div>
 
+            {pushStatus ? (
+              <p role="status" className="rounded-lg bg-muted/50 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+                {pushStatus}
+              </p>
+            ) : null}
+
             {permission !== "granted" ? (
               <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
                 <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-muted-foreground">
-                  Yerel hatırlatma bildirimleri için tarayıcı izni gerekir.
+                  Bildirimleri açarken tarayıcı izni ve mümkünse bu cihazın push aboneliği birlikte kurulur.
                 </p>
-                {permission === "default" ? (
-                  <Button size="sm" onClick={askPermission}>
-                    İzin ver
-                  </Button>
-                ) : (
+                {permission === "denied" || permission === "unsupported" ? (
                   <Badge variant="outline">Tarayıcı ayarları</Badge>
-                )}
+                ) : null}
               </div>
             ) : null}
 

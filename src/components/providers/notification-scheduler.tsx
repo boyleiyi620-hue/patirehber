@@ -13,6 +13,7 @@ import { REMINDER_META, todayKey } from "@/lib/utils";
 export function NotificationScheduler() {
   const { data, status, settings } = useApp();
   const fired = useRef<Set<string>>(new Set());
+  const inFlight = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (status !== "ready" || !data) return;
@@ -21,9 +22,11 @@ export function NotificationScheduler() {
     if (Notification.permission !== "granted") return;
 
     let cancelled = false;
+    let serverPushActive = false;
+    let pushModeResolved = false;
 
     const check = () => {
-      if (cancelled) return;
+      if (cancelled || !pushModeResolved || serverPushActive) return;
       if (settings.notifications.quietHours && isQuietHour()) return;
       const now = new Date();
       const hhmm = `${`${now.getHours()}`.padStart(2, "0")}:${`${now.getMinutes()}`.padStart(2, "0")}`;
@@ -48,19 +51,33 @@ export function NotificationScheduler() {
         }
 
         const key = `${reminder.id}:${today}`;
-        if (fired.current.has(key)) continue;
-        fired.current.add(key);
+        if (fired.current.has(key) || inFlight.current.has(key)) continue;
+        inFlight.current.add(key);
 
         const meta = REMINDER_META[reminder.type];
         void showNotification(
           `PatiRehber · ${reminder.title}`,
           `${meta.emoji} ${meta.hint} · Saat ${reminder.time}`,
           key,
-        );
+        ).then((shown) => {
+          inFlight.current.delete(key);
+          if (shown) fired.current.add(key);
+        });
       }
     };
 
-    check();
+    void (async () => {
+      try {
+        if ("serviceWorker" in navigator && "PushManager" in window) {
+          const registration = await navigator.serviceWorker.getRegistration();
+          serverPushActive = Boolean(await registration?.pushManager.getSubscription());
+        }
+      } catch {
+        serverPushActive = false;
+      }
+      pushModeResolved = true;
+      check();
+    })();
     const interval = window.setInterval(check, 20_000);
     return () => {
       cancelled = true;

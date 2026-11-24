@@ -59,16 +59,6 @@ export function AlarmOverlay() {
         triggeredRef.current.add(due.id);
         setAlarm(due);
         playAlarm();
-        // system notification
-        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-          try {
-            new Notification(`PatiRehber: ${due.title}`, {
-              body: due.note || "Hatirlatma zamani geldi.",
-              icon: "/icons/icon-192.png",
-              tag: due.id,
-            });
-          } catch {}
-        }
       }
     };
 

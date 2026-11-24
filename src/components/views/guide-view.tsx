@@ -78,7 +78,11 @@ export function GuideView() {
     settings,
     updateSettings,
     cats,
+    activeCat,
     activeDate,
+    isHistoricalDate,
+    setActiveDate,
+    returnToToday,
     guideChecklistEntries,
     toggleGuideChecklistItem,
   } = useApp();
@@ -147,9 +151,9 @@ export function GuideView() {
     }
 
     const breed = getBreed(cat.breedId);
-    const age = Math.floor(
-      (Date.now() - new Date(cat.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000),
-    );
+    const age = Math.max(0, Math.floor(
+      (new Date(`${activeDate}T12:00:00`).getTime() - new Date(`${cat.birthDate}T12:00:00`).getTime()) / (365.25 * 24 * 60 * 60 * 1000),
+    ));
     const likes =
       breed && (breed.activity === "Yüksek" || breed.activity === "Çok yüksek")
         ? ["İnteraktif oyun (tüy çubuğu, lazer)", "Tırmanma ve zıplama", "Pencere izleme", "Bulmaca mama kapları", "Kovalamaca oyunları"]
@@ -209,9 +213,10 @@ export function GuideView() {
           </CardContent>
         </Card>
 
-        <p className="text-[11px] text-muted-foreground">
-          Tikler {formatDateWithWeekday(activeDate)} için {cat.name} profiline kaydedilir.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2">
+          <p className="text-xs font-medium">{formatDateWithWeekday(activeDate)} · Tikler {cat.name} profiline kaydedilir.</p>
+          {isHistoricalDate ? <button type="button" onClick={returnToToday} className="rounded-lg border px-2.5 py-1.5 text-xs font-semibold">Bugüne dön</button> : null}
+        </div>
 
         <div className="flex gap-2" role="tablist" aria-label="Kediye özel rehber sekmeleri">
           {CAT_GUIDE_TABS.map((tab) => (
@@ -344,7 +349,7 @@ export function GuideView() {
             <div key={category.id} className="space-y-2">
               <p className="text-sm font-bold">{category.emoji} {category.title}</p>
               <Accordion>
-                {category.sections.slice(0, 3).map((section) => (
+                {category.sections.map((section) => (
                   <AccordionItem
                     key={section.id}
                     title={section.title}
@@ -387,6 +392,17 @@ export function GuideView() {
           </ButtonLink>
         }
       />
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card p-3">
+        <div className="min-w-0">
+          <p className="text-xs font-bold">Günlük rehber işaretleri</p>
+          <p className="text-[11px] text-muted-foreground">{activeCat ? `${activeCat.name} · ` : "Kedi seçilmedi · "}{formatDateWithWeekday(activeDate)} için</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Input aria-label="Rehber tarihi" type="date" value={activeDate} max={new Date().toLocaleDateString("en-CA")} onChange={(event) => setActiveDate(event.target.value)} className="h-9 w-[145px] text-xs" />
+          {isHistoricalDate ? <button type="button" onClick={returnToToday} className="whitespace-nowrap rounded-lg border px-2.5 py-2 text-xs font-semibold hover:bg-muted">Bugüne dön</button> : null}
+        </div>
+      </div>
 
       {/* Arama */}
       <div className="relative mb-4">
@@ -495,7 +511,7 @@ export function GuideView() {
                             : "Kaydet"}
                         </button>
                       </div>
-                      <GuideBlocks blocks={section.blocks} />
+                      <GuideBlocks blocks={section.blocks} checklist={activeCat ? { checkedItemIds: new Set(guideChecklistEntries.filter((entry) => entry.catId === activeCat.id && entry.date === activeDate && entry.sectionId === section.id).map((entry) => entry.itemId)), onToggleItem: (itemId) => toggleGuideChecklistItem(activeCat.id, section.id, itemId) } : undefined} />
                       <button
                         type="button"
                         onClick={() => {
@@ -583,7 +599,7 @@ export function GuideView() {
                         Çıkar
                       </button>
                     </div>
-                    <GuideBlocks blocks={section.blocks} />
+                    <GuideBlocks blocks={section.blocks} checklist={activeCat ? { checkedItemIds: new Set(guideChecklistEntries.filter((entry) => entry.catId === activeCat.id && entry.date === activeDate && entry.sectionId === section.id).map((entry) => entry.itemId)), onToggleItem: (itemId) => toggleGuideChecklistItem(activeCat.id, section.id, itemId) } : undefined} />
                   </AccordionItem>
                 ))}
               </Accordion>
@@ -643,7 +659,7 @@ export function GuideView() {
                       : "default"
                 }
               >
-                <GuideBlocks blocks={section.blocks} />
+                <GuideBlocks blocks={section.blocks} checklist={activeCat ? { checkedItemIds: new Set(guideChecklistEntries.filter((entry) => entry.catId === activeCat.id && entry.date === activeDate && entry.sectionId === section.id).map((entry) => entry.itemId)), onToggleItem: (itemId) => toggleGuideChecklistItem(activeCat.id, section.id, itemId) } : undefined} />
               </AccordionItem>
             ))}
           </Accordion>

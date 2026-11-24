@@ -26,7 +26,7 @@ export const guideCategories: GuideCategory[] = [
               ["4-6 ay", "3-4 öğün", "Yavru maması, büyüme için yüksek protein"],
               ["6-12 ay", "3 öğün", "Yavru → yetişkin mamasına geçiş"],
               ["1-7 yaş (yetişkin)", "2-3 öğün", "Tam ve dengeli yetişkin maması"],
-              ["7+ yaş (yaşlı)", "2-3 öğün", "Yaşlı maması, böbrek ve eklem desteği"],
+              ["7+ yaş (ileri yaş)", "2-3 öğün", "Beslenme ihtiyacı ve uygun mama veterinerle değerlendirilir"],
             ],
           },
           {
@@ -35,7 +35,7 @@ export const guideCategories: GuideCategory[] = [
           },
           {
             type: "tip",
-            text: "Serbest besleme (mama kabını sürekli dolu tutmak) obeziteye zemin hazırlar. Öğünleri ölçerek verin; günlük miktarı kedinin kilosuna ve aktivitesine göre hesaplayın.",
+            text: "Sürekli dolu mama kabı bazı kedilerde gereğinden fazla yemeye yol açabilir. Porsiyon ve öğün düzenini kedinizin yaşı, kilosu, sağlığı ve aktivitesine göre veterinerinizle belirleyin.",
           },
         ],
       },
@@ -115,7 +115,7 @@ export const guideCategories: GuideCategory[] = [
       {
         id: "health-vaccines",
         title: "Aşı takvimi",
-        summary: "Yavru ve yetişkin kediler için temel aşı planı.",
+        summary: "Örnek aşı planı; takvim kedinin öyküsü ve risklerine göre veterinerce belirlenir.",
         blocks: [
           {
             type: "table",
@@ -123,18 +123,18 @@ export const guideCategories: GuideCategory[] = [
             rows: [
               ["6-8 hafta", "Karma 1 (FVRCP)", "İlk doz, hekim değerlendirmesiyle"],
               ["10-12 hafta", "Karma 2", "2-4 hafta ara ile"],
-              ["14-16 hafta", "Karma 3 + Kuduz", "Kuduz yasal olarak zorunludur"],
+              ["14-16 hafta", "Karma / kuduz değerlendirmesi", "Yaş ve yerel mevzuat için veterinerinize danışın"],
               ["1 yaş", "Hatırlatma", "Karma ve kuduz rapeli"],
               ["Her 1-3 yıl", "Yetişkin rapel", "Risk durumuna göre hekim kararı"],
             ],
           },
           {
             type: "p",
-            text: "İç ve dış mekân erişimi olan kedilerde lösemi (FeLV) aşısı da gerekebilir. Aşı geçmişini ve bir sonraki tarihi PatiRehber'deki kedi profiline kaydedin.",
+            text: "İç ve dış mekân erişimi olan kedilerde lösemi (FeLV) aşısı gerekliliğini veterinerinizle değerlendirin. Aşı geçmişini ve sonraki tarihi kedi profiline kaydedin.",
           },
           {
             type: "tip",
-            text: "Aşı öncesi kedi sağlıklı olmalıdır. Ateş, ishal veya iştahsızlık varsa randevuyu erteleyin.",
+            text: "Aşı öncesi muayene ve aşılama zamanlamasını veteriner hekim belirler. Belirti varsa kliniğe önceden bilgi verin.",
           },
         ],
       },
@@ -146,8 +146,8 @@ export const guideCategories: GuideCategory[] = [
           {
             type: "list",
             items: [
-              "Dış parazit (pire, kene): Genellikle ayda 1 kez damla veya tablet.",
-              "İç parazit (solucan): 3 ayda 1 kez, hekim önerisine göre.",
+              "Dış parazit (pire, kene): Ürün ve uygulama aralığı yaşam tarzı ve bölgesel riske göre değişir.",
+              "İç parazit (solucan): Uygulama aralığını veterinerinizle belirleyin.",
               "Pire ve kene ürünlerini kedi ağırlığına göre seçin; köpek ürünleri kedilere ZEHİRLİDİR.",
               "Tedaviden sonra 48 saat boyunca yalama ve banyo yapmamasına dikkat edin.",
             ],
@@ -497,6 +497,28 @@ export const guideCategories: GuideCategory[] = [
           },
         ],
       },
+      {
+        id: "behavior-new-home",
+        title: "Yeni eve uyum ve güvenli alan",
+        summary: "Yeni bir kediye sakin, güvenli ve kendi hızında keşfedebileceği bir başlangıç sunun.",
+        blocks: [
+          {
+            type: "list",
+            items: [
+              "Başlangıçta sessiz bir oda hazırlayın; saklanma kutusu, yatak, tırmalama yüzeyi ve taşıma çantası bulunsun.",
+              "Mama, su ve kum kabını birbirinden ayrı, kolay erişilen noktalara koyun; kapıları ve pencereleri güvenli tutun.",
+              "Kediyi saklandığı yerden çıkarmayın veya temasa zorlamayın; kendi isteğiyle yaklaşmasına izin verin.",
+              "Evde başka hayvan varsa önce ayrı alanlarda tutun; koku alışverişi ve kısa, gözetimli tanışmalarla ilerleyin.",
+              "İp, küçük yutulabilir parçalar, temizlik kimyasalları ve kediler için zehirli bitkileri erişimden kaldırın.",
+              "İştah, tuvalet ve enerji düzeyindeki belirgin değişiklikleri izleyin; sağlık kaygısında veterinerinize danışın.",
+            ],
+          },
+          {
+            type: "tip",
+            text: "Saklanma ve çekingenlik yeni ortamda görülebilir. Süreç kediden kediye değişir; rutinini sabit tutun ve tanıştırma hızını kedinin rahatlığına göre ayarlayın.",
+          },
+        ],
+      },
     ],
   },
   {
@@ -679,12 +701,12 @@ export const guideCategories: GuideCategory[] = [
       },
       {
         id: "do-vet",
-        title: "Yılda en az bir kez kontrole gidin",
+        title: "Kontrol sıklığını veterinerinizle planlayın",
         summary: "Erken teşhis hayat kurtarır.",
         blocks: [
           {
             type: "tip",
-            text: "Aşı, diş ve kilo kontrolünü yıllık muayeneye dahil ettirin. 7 yaş üstü kedilerde yılda iki kontrol önerilir.",
+            text: "Aşı, diş ve kilo takibini muayenede konuşun. Kontrol aralığı yaşa, sağlık durumuna ve risklere göre veterinerce belirlenir.",
           },
         ],
       },
@@ -695,7 +717,7 @@ export const guideCategories: GuideCategory[] = [
         blocks: [
           {
             type: "tip",
-            text: "Kısa tüylü kedileri haftada 1, uzun tüylüleri haftada 2-3 kez tarayın. Dökülme döneminde sıklığı artırın.",
+            text: "Tarama sıklığını tüy yapısı, mevsim ve kedinizin toleransına göre ayarlayın; gerektiğinde veterinerden bakım önerisi alın.",
           },
         ],
       },

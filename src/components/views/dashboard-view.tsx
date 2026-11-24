@@ -27,11 +27,9 @@ import { useApp } from "@/components/providers/app-provider";
 import { BrandMark } from "@/components/layout/app-shell";
 import { CatAvatar } from "@/components/layout/cat-avatar";
 import { InstallPrompt } from "@/components/install-prompt";
-import { ScoreRing } from "@/components/dashboard/score-ring";
 import { WeeklyChart } from "@/components/dashboard/weekly-chart";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { EmptyState } from "@/components/ui/empty-state";
 import { tipOfTheDay } from "@/lib/guide-data";
 import {
@@ -45,7 +43,6 @@ import {
   getCatAge,
   greetingForHour,
   nextReminderDate,
-  scoreMessage,
   taskCompletedOn,
   taskProgressOn,
   todayKey,
@@ -181,9 +178,6 @@ export function DashboardView() {
             </span>
           ) : null}
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {activeDate === todayKey() ? "Bugünkü" : "Seçilen günün"} bakım puanı {score}/100 · {scoreMessage(score)}
-        </p>
       </section>
 
       {/* Aktif kedi */}
@@ -276,7 +270,6 @@ export function DashboardView() {
                   : "Tek tıkla işaretle, gerisini biz takip edelim."}
               </p>
             </div>
-            <ScoreRing value={score} size={58} stroke={6} />
           </CardHeader>
           <CardContent className="space-y-2 pt-1">
             <TaskRow
@@ -317,12 +310,6 @@ export function DashboardView() {
               done={play >= 15}
               value={`${play} dk`}
             />
-            <div className="pt-2">
-              <Progress value={score} label={activeDate === todayKey() ? "Günlük bakım puanı" : "Seçilen günün bakım puanı"} />
-              <p className="mt-1.5 text-[11px] text-muted-foreground">
-                Puan; mama, su, kum ve oyun kayıtlarından hesaplanır.
-              </p>
-            </div>
           </CardContent>
         </Card>
 

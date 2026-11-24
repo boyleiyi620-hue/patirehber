@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlarmClock,
   Bell,
@@ -28,7 +28,7 @@ import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PortionCalculator } from "@/components/guide/calculators";
-import { getNotificationPermission, requestNotificationPermission } from "@/lib/notifications";
+import { disablePushNotifications, enablePushNotifications, getNotificationPermission, type NotificationPermissionState } from "@/lib/notifications";
 import {
   REMINDER_META,
   describeDays,
@@ -72,11 +72,13 @@ export function RemindersView() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Reminder | null>(null);
   const [permissionBusy, setPermissionBusy] = useState(false);
+  const [permission, setPermission] = useState<NotificationPermissionState>("default");
+  const [pushStatus, setPushStatus] = useState<string | null>(null);
+  useEffect(() => setPermission(getNotificationPermission()), []);
   const [listOpen, setListOpen] = useState(false);
 
   const now = useMemo(() => parseDateKey(activeDate), [activeDate]);
   const today = activeDate;
-  const permission = getNotificationPermission();
 
   const dueToday = reminders.filter(
     (reminder) => reminder.enabled && isReminderDueOn(reminder, now),
@@ -133,15 +135,44 @@ export function RemindersView() {
 
   const askPermission = async () => {
     setPermissionBusy(true);
-    const result = await requestNotificationPermission();
-    setPermissionBusy(false);
-    if (result === "granted") {
-      updateSettings({ notifications: { ...settings.notifications, enabled: true } });
-      notify("Bildirim izni verildi 🔔");
-    } else if (result === "denied") {
-      notify("Bildirim izni reddedildi. Tarayıcı ayarlarından açabilirsin.");
-    } else if (result === "unsupported") {
-      notify("Bu tarayıcı bildirimleri desteklemiyor.");
+    setPushStatus(null);
+    try {
+      const result = await enablePushNotifications();
+      setPermission(result.permission);
+      if (result.ok) {
+        updateSettings({ notifications: { ...settings.notifications, enabled: true } });
+        const message = result.detail ?? (result.background
+          ? "Bu cihaz push bildirimlerine abone oldu."
+          : "İzin verildi; bildirimler uygulama açıkken gösterilebilir.");
+        setPushStatus(message);
+        notify(message);
+      } else {
+        setPushStatus(result.detail);
+        notify(result.detail);
+      }
+    } catch {
+      const message = "Bildirim aboneliği kurulamadı. Bağlantınızı kontrol edip tekrar deneyin.";
+      setPushStatus(message);
+      notify(message);
+    } finally {
+      setPermissionBusy(false);
+    }
+  };
+
+  const turnOffNotifications = async () => {
+    setPermissionBusy(true);
+    setPushStatus(null);
+    try {
+      await disablePushNotifications();
+      updateSettings({ notifications: { ...settings.notifications, enabled: false } });
+      setPushStatus("Bu cihazdaki push aboneliği kapatıldı.");
+      notify("Bildirimler kapatıldı.");
+    } catch {
+      const message = "Push aboneliği kaldırılamadı; bildirim tercihi değiştirilmedi.";
+      setPushStatus(message);
+      notify(message);
+    } finally {
+      setPermissionBusy(false);
     }
   };
 
@@ -228,51 +259,22 @@ export function RemindersView() {
         </CardContent>
       </Card>
 
-      {/* Bildirim izni / tercih bandı */}
-      {permission !== "granted" || !settings.notifications.enabled ? (
-        <Card className="mt-3 border-primary/20 bg-primary/5">
-          <CardContent className="flex flex-wrap items-center gap-3 p-4">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary-strong">
-              <Bell className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold">
-                {permission === "granted"
-                  ? "Bildirimler kapalı"
-                  : "Bildirimleri aç"}
-              </p>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                {permission === "denied"
-                  ? "İzin reddedilmiş. Tarayıcı ayarlarından PatiRehber için bildirim iznini açabilirsin."
-                  : "Saatinde hatırlatma almak için bildirim izni ver. Tarayıcı kısıtları nedeniyle uygulama tamamen kapalıyken alarm çalması garanti değildir; PWA olarak kurmak ve izin vermek en iyi sonucu verir."}
-              </p>
-            </div>
-            {permission === "granted" ? (
-              <Button
-                size="sm"
-                onClick={() =>
-                  updateSettings({
-                    notifications: {
-                      ...settings.notifications,
-                      enabled: true,
-                    },
-                  })
-                }
-              >
-                Aç
-              </Button>
-            ) : permission === "default" ? (
-              <Button size="sm" onClick={askPermission} disabled={permissionBusy}>
-                İzin ver
-              </Button>
-            ) : (
-              <ButtonLink href="/settings" size="sm" variant="outline">
-                Ayarlar
-              </ButtonLink>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
+      {/* Gerçek tarayıcı izni ve bu cihazın push aboneliği */}
+      <Card className="mt-3 border-primary/20 bg-primary/5">
+        <CardContent className="flex flex-wrap items-center gap-3 p-3.5">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary-strong">
+            <Bell className="h-4 w-4" aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold">{settings.notifications.enabled ? "Bildirimler açık" : permission === "granted" ? "İzin verildi, bildirimler kapalı" : "Bildirimleri aç"}</p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+              {permission === "denied" ? "İzin reddedilmiş. Tarayıcı ayarlarından PatiRehber için bildirim iznini açabilirsin." : permission === "unsupported" ? "Bu tarayıcı bildirimleri desteklemiyor." : "İzin ve bu cihazın push aboneliği birlikte kurulur; abonelik başarıyla tamamlanmadan açık durumu gösterilmez."}
+            </p>
+            {pushStatus ? <p role="status" className="mt-1 text-[11px] font-medium text-foreground">{pushStatus}</p> : null}
+          </div>
+          {settings.notifications.enabled ? <Button size="sm" variant="outline" onClick={turnOffNotifications} disabled={permissionBusy}>{permissionBusy ? "İşleniyor…" : "Kapat"}</Button> : permission === "denied" || permission === "unsupported" ? <ButtonLink href="/settings" size="sm" variant="outline">Ayarlar</ButtonLink> : <Button size="sm" onClick={askPermission} disabled={permissionBusy}>{permissionBusy ? "Kuruluyor…" : permission === "granted" ? "Abone ol" : "İzin ver"}</Button>}
+        </CardContent>
+      </Card>
 
       {/* Kapsam sekmeleri */}
       <div
@@ -618,8 +620,8 @@ export function RemindersView() {
           </ul>
           <p className="mt-3 flex items-start gap-1.5 text-[10px] leading-relaxed text-muted-foreground">
             <Bell className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
-            Bildirimler uygulama açıkken kontrol edilir. Arka plan push
-            bildirimleri için service worker hazırdır.
+            Push aboneliği etkinse bildirimler uygulama kapalıyken de gelebilir;
+            abonelik olmayan cihazlarda hatırlatıcılar uygulama açıkken kontrol edilir.
           </p>
         </CardContent>
       </Card>
