@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = request.nextUrl.pathname.startsWith("/auth");
   if (!user && !isAuthRoute && request.nextUrl.pathname !== "/auth") {
     // Allow static assets and api
-    if (!request.nextUrl.pathname.startsWith("/_next") && !request.nextUrl.pathname.startsWith("/icons") && request.nextUrl.pathname !== "/manifest.json" && request.nextUrl.pathname !== "/sw.js" && request.nextUrl.pathname !== "/icon.svg" && request.nextUrl.pathname !== "/offline") {
+    if (!request.nextUrl.pathname.startsWith("/api") && !request.nextUrl.pathname.startsWith("/_next") && !request.nextUrl.pathname.startsWith("/icons") && request.nextUrl.pathname !== "/manifest.json" && request.nextUrl.pathname !== "/sw.js" && request.nextUrl.pathname !== "/icon.svg" && request.nextUrl.pathname !== "/offline") {
       const url = request.nextUrl.clone();
       url.pathname = "/auth";
       return NextResponse.redirect(url);
