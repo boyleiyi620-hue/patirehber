@@ -142,7 +142,7 @@ export function RemindersView() {
       if (result.ok) {
         updateSettings({ notifications: { ...settings.notifications, enabled: true } });
         const message = result.detail ?? (result.background
-          ? "Bu cihaz push bildirimlerine abone oldu."
+          ? "Bu cihaz artık arka plan hatırlatma bildirimlerini alacak."
           : "İzin verildi; bildirimler uygulama açıkken gösterilebilir.");
         setPushStatus(message);
         notify(message);
@@ -151,7 +151,7 @@ export function RemindersView() {
         notify(result.detail);
       }
     } catch {
-      const message = "Bildirim aboneliği kurulamadı. Bağlantınızı kontrol edip tekrar deneyin.";
+      const message = "Bildirimler etkinleştirilemedi. Bağlantını kontrol edip tekrar dene.";
       setPushStatus(message);
       notify(message);
     } finally {
@@ -165,10 +165,10 @@ export function RemindersView() {
     try {
       await disablePushNotifications();
       updateSettings({ notifications: { ...settings.notifications, enabled: false } });
-      setPushStatus("Bu cihazdaki push aboneliği kapatıldı.");
+      setPushStatus("Bu cihazdaki bildirimler kapatıldı.");
       notify("Bildirimler kapatıldı.");
     } catch {
-      const message = "Push aboneliği kaldırılamadı; bildirim tercihi değiştirilmedi.";
+      const message = "Bu cihazdaki bildirim ayarı kaldırılamadı; tercih değiştirilmedi.";
       setPushStatus(message);
       notify(message);
     } finally {
@@ -268,11 +268,11 @@ export function RemindersView() {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold">{settings.notifications.enabled ? "Bildirimler açık" : permission === "granted" ? "İzin verildi, bildirimler kapalı" : "Bildirimleri aç"}</p>
             <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-              {permission === "denied" ? "İzin reddedilmiş. Tarayıcı ayarlarından PatiRehber için bildirim iznini açabilirsin." : permission === "unsupported" ? "Bu tarayıcı bildirimleri desteklemiyor." : "İzin ve bu cihazın push aboneliği birlikte kurulur; abonelik başarıyla tamamlanmadan açık durumu gösterilmez."}
+              {permission === "denied" ? "İzin reddedilmiş. Tarayıcı ayarlarından PatiRehber için bildirim iznini açabilirsin." : permission === "unsupported" ? "Bu tarayıcı bildirimleri desteklemiyor." : "Bildirimleri açmak ücretsizdir. Tarayıcı izni ve bu cihazın bildirim kaydı tamamlanınca hatırlatmalar açılır."}
             </p>
             {pushStatus ? <p role="status" className="mt-1 text-[11px] font-medium text-foreground">{pushStatus}</p> : null}
           </div>
-          {settings.notifications.enabled ? <Button size="sm" variant="outline" onClick={turnOffNotifications} disabled={permissionBusy}>{permissionBusy ? "İşleniyor…" : "Kapat"}</Button> : permission === "denied" || permission === "unsupported" ? <ButtonLink href="/settings" size="sm" variant="outline">Ayarlar</ButtonLink> : <Button size="sm" onClick={askPermission} disabled={permissionBusy}>{permissionBusy ? "Kuruluyor…" : permission === "granted" ? "Abone ol" : "İzin ver"}</Button>}
+          {settings.notifications.enabled ? <Button size="sm" variant="outline" onClick={turnOffNotifications} disabled={permissionBusy}>{permissionBusy ? "İşleniyor…" : "Kapat"}</Button> : permission === "denied" || permission === "unsupported" ? <ButtonLink href="/settings" size="sm" variant="outline">Ayarlar</ButtonLink> : <Button size="sm" onClick={askPermission} disabled={permissionBusy}>{permissionBusy ? "Kuruluyor…" : permission === "granted" ? "Bildirimleri etkinleştir" : "İzin ver"}</Button>}
         </CardContent>
       </Card>
 
@@ -620,8 +620,8 @@ export function RemindersView() {
           </ul>
           <p className="mt-3 flex items-start gap-1.5 text-[10px] leading-relaxed text-muted-foreground">
             <Bell className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
-            Push aboneliği etkinse bildirimler uygulama kapalıyken de gelebilir;
-            abonelik olmayan cihazlarda hatırlatıcılar uygulama açıkken kontrol edilir.
+            Bu cihazda arka plan bildirimleri açıksa hatırlatmalar uygulama kapalıyken de gelebilir;
+            değilse hatırlatmalar uygulama açıkken kontrol edilir.
           </p>
         </CardContent>
       </Card>

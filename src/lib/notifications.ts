@@ -77,7 +77,7 @@ export async function enablePushNotifications(): Promise<PushSetupResult> {
 
     const serialized = subscription.toJSON();
     if (!serialized.endpoint || !serialized.keys?.p256dh || !serialized.keys.auth) {
-      return { ok: false, permission: "granted", detail: "Bu cihazın push aboneliği okunamadı. Tekrar deneyin." };
+      return { ok: false, permission: "granted", detail: "Bu cihazın bildirim ayarı okunamadı. Tekrar deneyin." };
     }
 
     const supabase = createClient();
@@ -101,7 +101,7 @@ export async function enablePushNotifications(): Promise<PushSetupResult> {
       return {
         ok: false,
         permission: "granted",
-        detail: "Push aboneliği kaydedilemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.",
+        detail: "Bu cihaz için bildirim ayarı kaydedilemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.",
       };
     }
 

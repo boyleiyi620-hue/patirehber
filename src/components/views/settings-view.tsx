@@ -106,7 +106,7 @@ export function SettingsView() {
         }
         updateSettings({ notifications: { ...settings.notifications, enabled: true } });
         const message = result.detail ?? (result.background
-          ? "Bu cihaz arka plan push bildirimlerine abone oldu."
+          ? "Bu cihaz artık arka plan hatırlatma bildirimlerini alacak."
           : "İzin verildi; bildirimler uygulama açıkken gösterilecek.");
         setPushStatus(message);
         notify(message);
@@ -115,12 +115,12 @@ export function SettingsView() {
 
       await disablePushNotifications();
       updateSettings({ notifications: { ...settings.notifications, enabled: false } });
-      setPushStatus("Bildirimler bu hesapta kapatıldı ve bu cihazın push aboneliği kaldırıldı.");
+      setPushStatus("Bildirimler bu hesapta kapatıldı ve bu cihazın bildirim kaydı kaldırıldı.");
       notify("Bildirimler kapatıldı.");
     } catch {
       const message = checked
-        ? "Bildirim aboneliği kurulamadı. Bağlantını kontrol edip tekrar dene."
-        : "Bu cihazın push aboneliği kaldırılamadı; tercih değiştirilmedi.";
+        ? "Bildirimler etkinleştirilemedi. Bağlantını kontrol edip tekrar dene."
+        : "Bu cihazın bildirim ayarı kaldırılamadı; tercih değiştirilmedi.";
       setPushStatus(message);
       notify(message);
     } finally {
@@ -349,7 +349,7 @@ export function SettingsView() {
             {permission !== "granted" ? (
               <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
                 <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-muted-foreground">
-                  Bildirimleri açarken tarayıcı izni ve mümkünse bu cihazın push aboneliği birlikte kurulur.
+                  Bildirimleri açmak ücretsizdir. Tarayıcı iznini verdikten sonra bu cihaz hatırlatma bildirimi alacak şekilde kaydedilir.
                 </p>
                 {permission === "denied" || permission === "unsupported" ? (
                   <Badge variant="outline">Tarayıcı ayarları</Badge>
