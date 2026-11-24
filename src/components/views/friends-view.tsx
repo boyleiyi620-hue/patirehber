@@ -204,7 +204,7 @@ export function FriendsView() {
 
   return (
     <div className="space-y-4">
-      <PageHeader emoji="👥" title="Arkadaslar" subtitle="Kodunla arkadas ekle, kedilerini gor." />
+      <PageHeader emoji="👥" title="Arkadaslar" subtitle="Kodunla arkadas ekle, kedilerini gor." tourTarget="friends-overview" />
 
       {error ? (
         <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-xs text-danger">

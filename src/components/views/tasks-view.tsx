@@ -176,6 +176,7 @@ export function TasksView() {
       <PageHeader
         emoji="✅"
         title="Görevler"
+        tourTarget="tasks-overview"
         subtitle={
           activeDate !== todayKey()
             ? `${formatDateWithWeekday(activeDate)} · ${todayCount} aktif · ${doneCount} tamamlandı`

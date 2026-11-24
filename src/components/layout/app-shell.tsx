@@ -5,6 +5,7 @@ import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useApp } from "@/components/providers/app-provider";
 import { usePathname } from "next/navigation";
 import { BottomNav } from "./bottom-nav";
+import { GuidedTours } from "@/components/tours/guided-tours";
 import { AlarmOverlay } from "@/components/alarm-overlay";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/empty-state";
@@ -168,6 +169,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <AlarmOverlay />
       {pathname !== "/onboarding" && pathname !== "/auth" ? <BottomNav /> : null}
+      {pathname !== "/onboarding" && !pathname.startsWith("/auth") ? <GuidedTours /> : null}
     </div>
   );
 }

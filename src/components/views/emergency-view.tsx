@@ -129,6 +129,7 @@ export function EmergencyView() {
       <PageHeader
         emoji="🆘"
         title="Acil Durum"
+        tourTarget="emergency-overview"
         subtitle="Zehirlenme şüphesinde hızlı karar vermen için kontrol listesi."
         backHref="/"
         backLabel="Ana sayfa"

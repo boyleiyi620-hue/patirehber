@@ -34,6 +34,7 @@ export function CatsView() {
       <PageHeader
         emoji="🐈"
         title={t("cats.title")}
+        tourTarget="cats-overview"
         subtitle={
           cats.length
             ? `${cats.length} kedi profili · aktif kedi ${cats.find((cat) => cat.id === activeCatId)?.name ?? ""}`

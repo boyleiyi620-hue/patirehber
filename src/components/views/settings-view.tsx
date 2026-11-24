@@ -149,6 +149,7 @@ export function SettingsView() {
       <PageHeader
         emoji="⚙️"
         title={t("settings.title")}
+        tourTarget="settings-overview"
         subtitle="Profil, görünüm, bildirim ve veri tercihlerini yönet."
       />
 

@@ -610,7 +610,7 @@ export function DashboardView() {
 function DashboardTop() {
   const { settings, t } = useApp();
   return (
-    <div className="flex items-center justify-between">
+    <div data-tour-target="dashboard-overview" className="flex items-center justify-between">
       <BrandMark />
       <div className="flex items-center gap-1.5">
         <span className="hidden rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 sm:inline-flex">

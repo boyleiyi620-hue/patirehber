@@ -160,6 +160,7 @@ export function RemindersView() {
       <PageHeader
         emoji="⏰"
         title="Hatırlatıcılar"
+        tourTarget="reminders-overview"
         subtitle="Mama, su, kum, ilaç ve rutin bakım görevlerini planla; serini koru."
         action={
           <Button size="sm" onClick={openNew}>

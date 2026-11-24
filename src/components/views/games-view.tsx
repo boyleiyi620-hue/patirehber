@@ -52,6 +52,7 @@ export function GamesView() {
       <PageHeader
         emoji="🎮"
         title="Oyunlar"
+        tourTarget="games-overview"
         subtitle="Kedi bilginizi test edin, hafızanızı güçlendirin."
       />
 

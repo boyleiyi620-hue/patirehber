@@ -56,7 +56,7 @@ export function SearchView() {
 
   return (
     <div className="space-y-5">
-      <PageHeader emoji="🔍" title="Arama" subtitle="Kediler, görevler, hatırlatıcılar ve rehberde ara." />
+      <PageHeader emoji="🔍" title="Arama" subtitle="Kediler, görevler, hatırlatıcılar ve rehberde ara." tourTarget="search-overview" />
       <div className="relative">
         <Search className="pointer-events-none absolute start-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
         <Input

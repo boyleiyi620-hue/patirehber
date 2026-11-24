@@ -12,6 +12,7 @@ interface PageHeaderProps {
   backLabel?: string;
   action?: React.ReactNode;
   className?: string;
+  tourTarget?: string;
 }
 
 export function PageHeader({
@@ -22,9 +23,10 @@ export function PageHeader({
   backLabel = "Geri",
   action,
   className,
+  tourTarget,
 }: PageHeaderProps) {
   return (
-    <header className={cn("mb-5 animate-fade-in-up", className)}>
+    <header data-tour-target={tourTarget} className={cn("mb-5 animate-fade-in-up", className)}>
       {backHref ? (
         <Link
           href={backHref}

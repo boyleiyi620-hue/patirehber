@@ -136,10 +136,11 @@ export function CalendarView() {
       <PageHeader
         emoji="🗓️"
         title="Takvim"
+        tourTarget="calendar-overview"
         subtitle="Geçmiş günlerde neler yaptığınızı gör ve eksik kayıtları tamamla."
       />
 
-      <Card>
+      <Card data-tour-target="calendar-history">
         <CardHeader className="flex-row items-center justify-between gap-2 pb-3">
           <div className="flex min-w-0 items-center gap-2">
             <CalendarDays className="h-5 w-5 shrink-0 text-primary-strong" aria-hidden="true" />

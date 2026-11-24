@@ -378,6 +378,7 @@ export function GuideView() {
       <PageHeader
         emoji="📚"
         title={t("guide.title")}
+        tourTarget="guide-overview"
         subtitle="Beslenmeden davranışa, 51 ırk rehberinden acil durumlara kadar ihtiyacın olan her şey."
         action={
           <ButtonLink href="/emergency" variant="destructive-soft" size="sm">

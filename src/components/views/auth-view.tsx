@@ -31,7 +31,12 @@ export function AuthView() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: name } },
+          options: {
+            data: {
+              full_name: name,
+              patirehber_full_tour_pending: true,
+            },
+          },
         });
         if (error) throw error;
         // Auto-confirm açık: doğrudan giriş yap

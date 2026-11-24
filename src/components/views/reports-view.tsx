@@ -102,6 +102,7 @@ export function ReportsView() {
         <PageHeader
           emoji="📊"
           title="Raporlar"
+          tourTarget="reports-overview"
           subtitle="Haftalık ve aylık bakım özeti, rozetler ve kilo değişimi."
           backHref="/"
           backLabel="Ana sayfa"
@@ -121,6 +122,7 @@ export function ReportsView() {
       <PageHeader
         emoji="📊"
         title="Raporlar"
+        tourTarget="reports-overview"
         subtitle="Bakım alışkanlıklarını gör, gelişimini takip et."
         backHref="/"
         backLabel="Ana sayfa"
